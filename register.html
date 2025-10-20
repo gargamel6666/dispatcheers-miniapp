@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Driver • Registration</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -69,7 +68,9 @@
     .btn:active{ transform: translateY(1px); }
     .primary{ background:var(--accent); color:var(--accentText); }
     .ghost{ background:transparent; color:var(--text); }
-    .err{ color:#ff9b9b; font-size:13px; margin-top:8px; display:none }
+    .msg{ font-size:13px; margin-top:8px; display:none }
+    .err{ color:#ff9b9b }
+    .ok{ color:#9be29b }
   </style>
 </head>
 <body>
@@ -85,7 +86,7 @@
     <label for="full">Full name</label>
     <input id="full" placeholder="Your full name" autocomplete="name" />
 
-    <div id="err" class="err"></div>
+    <div id="msg" class="msg"></div>
 
     <div class="row">
       <button id="back" class="btn ghost" type="button">Back</button>
@@ -96,57 +97,54 @@
   <script>
     const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
 
-    // API endpoint (edge function)
     const API_BASE = 'https://laybyqlfyqjuivshjhdn.supabase.co/functions/v1';
     const REG_URL  = `${API_BASE}/register`;
 
-    // Prefill full name from Telegram
-    (function prefill(){
-      const u = tg?.initDataUnsafe?.user;
-      const fallback = [u?.first_name, u?.last_name].filter(Boolean).join(' ').trim();
-      if (fallback) document.getElementById('full').value = fallback;
-      document.getElementById('full').focus();
-    })();
-
-    const errBox = document.getElementById('err');
-    function showErr(msg){ errBox.textContent = msg; errBox.style.display = 'block'; }
-    function clearErr(){ errBox.style.display = 'none'; errBox.textContent = ''; }
+    const msg = document.getElementById('msg');
+    function show(type, text){
+      msg.className = 'msg ' + (type==='err' ? 'err' : 'ok');
+      msg.textContent = text;
+      msg.style.display = 'block';
+    }
+    function hide(){ msg.style.display = 'none'; msg.textContent = ''; }
 
     document.getElementById('back')?.addEventListener('click', ()=> {
-      // назад в меню
       location.replace('./index.html');
     });
 
     let inFlight = false;
     document.getElementById('submit')?.addEventListener('click', async ()=>{
       if (inFlight) return;
-      clearErr();
+      hide();
 
       const full = (document.getElementById('full').value || '').trim();
-      if (!full){ showErr('Please enter your full name.'); return; }
+      if (!full){ show('err','Please enter your full name.'); return; }
 
       inFlight = true;
       try{
         const res = await fetch(REG_URL, {
           method:'POST',
+          mode: 'cors',
           headers:{
             'content-type':'application/json',
             'x-telegram-init-data': tg?.initData || ''
           },
-          body: JSON.stringify({ full_name: full, role: 'driver' })
+          body: JSON.stringify({ full_name: full }) // роль задаётся на сервере DEFAULT_ROLE=driver
         });
+
         if (!res.ok){
-          const t = await res.text().catch(()=> 'Registration failed');
-          showErr(t || 'Registration failed');
+          const text = await res.text().catch(()=> '');
+          show('err', text || `HTTP ${res.status}`);
           inFlight = false;
           return;
         }
-        // кэшируем флаг зарегистрированного на сессию
+
+        // кэш "зарегистрирован"
         const uid = tg?.initDataUnsafe?.user?.id || null;
         sessionStorage.setItem('me:v1', JSON.stringify({ userId: uid, registered: true }));
         location.replace('./index.html');
       }catch(e){
-        showErr('Network error. Try again.');
+        show('err','Network error. Try again.');
         inFlight = false;
       }
     });
