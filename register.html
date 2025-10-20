@@ -2,62 +2,153 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Driver • Registration</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body{margin:0;background:#0f1220;color:#e6e6e6;font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;padding:16px;display:grid;place-items:start}
-    h2{margin:6px 0 4px}
-    .muted{color:#9aa3b2;font-size:13px;margin-bottom:12px}
-    input,button{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#15182a;color:#fff;margin:8px 0}
-    button{background:#4e8cff;border-color:#4e8cff;font-weight:700}
-    .ghost{background:transparent}
-    .err{color:#ff8a8a;font-size:13px;display:none}
+    :root{
+      --bg: var(--tg-theme-secondary-bg-color, #0f1220);
+      --text: var(--tg-theme-text-color, #e6e6e6);
+      --muted: var(--tg-theme-hint-color, #9aa3b2);
+      --accent: var(--tg-theme-button-color, #4e8cff);
+      --accentText: var(--tg-theme-button-text-color, #fff);
+      --card: rgba(255,255,255,0.06);
+      --stroke: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.25);
+      --radius: 18px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
+        radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
+        var(--bg);
+      display:grid; place-items:center;
+      padding: calc(8px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
+    }
+    .card{
+      width:100%; max-width:520px;
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      padding:20px;
+    }
+    .head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .logo{
+      width:38px;height:38px;border-radius:12px;
+      background:linear-gradient(135deg,var(--accent),#7c3aed);
+      display:grid;place-items:center;color:var(--accentText);font-weight:800;
+      box-shadow:0 6px 16px rgba(0,0,0,.25);user-select:none;flex:0 0 38px;
+    }
+    h1{font-size:18px;line-height:1.25;margin:0}
+    .sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+    label{display:block;margin:10px 2px 6px;color:var(--muted);font-size:13px}
+    input{
+      width:100%; padding:14px 14px; border-radius:14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.05);
+      color:var(--text); font-size:16px;
+    }
+    input::placeholder{color:var(--muted)}
+    .row{display:flex; gap:10px; margin-top:14px}
+    .btn{
+      flex:1; border-radius:14px; padding:14px 16px;
+      border:1px solid var(--stroke); cursor:pointer; font-weight:700;
+      transition: transform .12s ease, opacity .12s ease;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .primary{ background:var(--accent); color:var(--accentText); }
+    .ghost{ background:transparent; color:var(--text); }
+    .err{ color:#ff9b9b; font-size:13px; margin-top:8px; display:none }
   </style>
 </head>
 <body>
-  <div style="max-width:520px;width:100%">
-    <h2>Quick Registration</h2>
-    <div class="muted">We’ll link your Telegram account to the driver profile.</div>
+  <main class="card">
+    <div class="head">
+      <div class="logo">⋯</div>
+      <div>
+        <h1>Quick Registration</h1>
+        <div class="sub">We’ll link your Telegram account to the driver profile.</div>
+      </div>
+    </div>
 
-    <input id="phone" placeholder="Phone (optional)" />
-    <input id="email" placeholder="Email (optional)" />
-    <input id="company" placeholder="Company (optional)" />
+    <label for="full">Full name</label>
+    <input id="full" placeholder="Your full name" autocomplete="name" />
+
     <div id="err" class="err"></div>
 
-    <button id="submit">Continue</button>
-    <button id="cancel" class="ghost">Back</button>
-  </div>
+    <div class="row">
+      <button id="back" class="btn ghost" type="button">Back</button>
+      <button id="submit" class="btn primary" type="button">Continue</button>
+    </div>
+  </main>
 
   <script>
     const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+
+    // API endpoint (edge function)
     const API_BASE = 'https://laybyqlfyqjuivshjhdn.supabase.co/functions/v1';
     const REG_URL  = `${API_BASE}/register`;
 
-    function showErr(t){ const e=document.getElementById('err'); e.textContent=t; e.style.display='block'; }
-    function clearErr(){ const e=document.getElementById('err'); e.style.display='none'; e.textContent=''; }
+    // Prefill full name from Telegram
+    (function prefill(){
+      const u = tg?.initDataUnsafe?.user;
+      const fallback = [u?.first_name, u?.last_name].filter(Boolean).join(' ').trim();
+      if (fallback) document.getElementById('full').value = fallback;
+      document.getElementById('full').focus();
+    })();
 
-    document.getElementById('cancel')?.addEventListener('click', ()=> location.replace('./index.html'));
+    const errBox = document.getElementById('err');
+    function showErr(msg){ errBox.textContent = msg; errBox.style.display = 'block'; }
+    function clearErr(){ errBox.style.display = 'none'; errBox.textContent = ''; }
 
+    document.getElementById('back')?.addEventListener('click', ()=> {
+      // назад в меню
+      location.replace('./index.html');
+    });
+
+    let inFlight = false;
     document.getElementById('submit')?.addEventListener('click', async ()=>{
+      if (inFlight) return;
       clearErr();
-      const body = {
-        phone:   document.getElementById('phone').value || null,
-        email:   document.getElementById('email').value || null,
-        company: document.getElementById('company').value || null,
-        role: 'driver'
-      };
+
+      const full = (document.getElementById('full').value || '').trim();
+      if (!full){ showErr('Please enter your full name.'); return; }
+
+      inFlight = true;
       try{
-        const r = await fetch(REG_URL, {
+        const res = await fetch(REG_URL, {
           method:'POST',
-          headers:{ 'content-type':'application/json', 'x-telegram-init-data': tg?.initData || '' },
-          body: JSON.stringify(body)
+          headers:{
+            'content-type':'application/json',
+            'x-telegram-init-data': tg?.initData || ''
+          },
+          body: JSON.stringify({ full_name: full, role: 'driver' })
         });
-        if (!r.ok){ showErr(await r.text()); return; }
+        if (!res.ok){
+          const t = await res.text().catch(()=> 'Registration failed');
+          showErr(t || 'Registration failed');
+          inFlight = false;
+          return;
+        }
+        // кэшируем флаг зарегистрированного на сессию
         const uid = tg?.initDataUnsafe?.user?.id || null;
         sessionStorage.setItem('me:v1', JSON.stringify({ userId: uid, registered: true }));
         location.replace('./index.html');
-      }catch(e){ showErr('Network error. Try again.'); }
+      }catch(e){
+        showErr('Network error. Try again.');
+        inFlight = false;
+      }
     });
   </script>
 </body>
