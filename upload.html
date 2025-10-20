@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Upload BOL</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{
+      --bg: var(--tg-theme-secondary-bg-color, #0f1220);
+      --text: var(--tg-theme-text-color, #e6e6e6);
+      --muted: var(--tg-theme-hint-color, #9aa3b2);
+      --accent: var(--tg-theme-button-color, #4e8cff);
+      --accentText: var(--tg-theme-button-text-color, #fff);
+      --card: rgba(255,255,255,0.06);
+      --stroke: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.25);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: var(--text);
+      background: radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%), radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%), var(--bg);
+      display: grid; place-items: center; padding: 16px; }
+    .card { width: 100%; max-width: 520px; background: var(--card); border: 1px solid var(--stroke);
+      border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 20px; }
+    .head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .logo { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), #7c3aed);
+      display: grid; place-items: center; color: var(--accentText); font-weight: 800; box-shadow: 0 6px 16px rgba(0,0,0,.25); user-select: none; flex: 0 0 38px; }
+    h1 { font-size: 18px; line-height: 1.25; margin: 0; } .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .alert { display:none; margin-top:10px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.15); background: rgba(255,107,107,0.12); color:#ffd7d7; font-size:13px; }
+    form { margin-top: 12px; } label { display:block; margin: 10px 0 6px; font-weight: 600; }
+    input[type="file"]{ width:100%; padding:12px; border-radius:12px; border:1px solid var(--stroke); background: rgba(255,255,255,0.05); color: var(--text); }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+    .btn { margin-top: 14px; width: 100%; border-radius: 14px; padding: 14px 16px; border: 1px solid var(--stroke);
+      background: var(--accent); color: var(--accentText); font-weight: 700; cursor: pointer; transition: transform .12s ease; }
+    .btn:active { transform: translateY(1px); } .btn[disabled] { opacity:.6; cursor: default; }
+    .secondary { background: transparent; color: var(--text); margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="head">
+      <div class="logo">⋯</div>
+      <div>
+        <h1>Upload BOL</h1>
+        <div class="sub">Attach your BOL file(s). We’ll capture your Telegram user ID automatically.</div>
+      </div>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="bolForm" autocomplete="off" enctype="multipart/form-data" novalidate>
+      <label for="bol">BOL file(s)</label>
+      <input id="bol" name="bol_file" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple required />
+      <div class="hint">PDF or images are fine. Multiple pages → select multiple files.</div>
+
+      <button class="btn" type="submit" id="submit">Submit</button>
+      <button class="btn secondary" type="button" id="back">Back to menu</button>
+    </form>
+  </main>
+
+  <script>
+    const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+
+    // registration guard
+    const API_BASE = 'https://laybyqlfyqjuivshjhdn.supabase.co/functions/v1';
+    const ME_URL   = `${API_BASE}/rapid-function`;
+    const CACHE_KEY = 'me:v1';
+    const userId = tg?.initDataUnsafe?.user?.id || null;
+
+    async function ensureRegistered(){
+      try{
+        const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
+        if (cached && cached.userId === userId && cached.registered) return true;
+        const r = await fetch(ME_URL, { method:'POST', headers:{'content-type':'application/json','x-telegram-init-data':tg?.initData||''}, body:'{}' });
+        const data = await r.json();
+        const ok = !!data?.registered;
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ userId, registered: ok, profile: data?.profile || null }));
+        if (!ok) location.replace('./register.html');
+        return ok;
+      }catch{ location.replace('./register.html'); return false; }
+    }
+    ensureRegistered();
+
+    const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/upload-bol";
+    const form = document.getElementById('bolForm');
+    const submitBtn = document.getElementById('submit');
+    const backBtn = document.getElementById('back');
+    const fileInput = document.getElementById('bol');
+    const alertBox = document.getElementById('alert');
+
+    backBtn?.addEventListener('click', () => { location.href = "./"; });
+
+    let inFlight = false;
+
+    function lockForm(on) {
+      form.style.pointerEvents = on ? 'none' : 'auto';
+      form.style.opacity = on ? '0.85' : '1';
+      submitBtn.disabled = on;
+      backBtn.disabled = on;
+      submitBtn.textContent = on ? 'Uploading…' : 'Submit';
+    }
+    function showError(msg) { alertBox.textContent = msg; alertBox.style.display = 'block'; }
+    function hideError() { alertBox.style.display = 'none'; alertBox.textContent = ''; }
+
+    submitBtn.addEventListener('click', (e) => { if (inFlight) { e.preventDefault(); e.stopPropagation(); } }, { capture: true });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (inFlight) return;
+
+      const files = fileInput.files;
+      if (!files || files.length === 0) { showError('Please select at least one file.'); return; }
+
+      hideError(); inFlight = true;
+
+      const meta = { initData: tg?.initData || "", user: tg?.initDataUnsafe?.user || null };
+      let totalBytes = 0; for (const f of files) totalBytes += (f.size || 0);
+
+      const fd = new FormData(form);
+      fd.append("_tg_meta", JSON.stringify(meta));
+      fd.append("_debug_file_count", String(files.length));
+      fd.append("_debug_total_bytes", String(totalBytes));
+
+      lockForm(true);
+
+      try {
+        const res = await fetch(WEBHOOK_URL, { method: "POST", body: fd });
+        if (!res.ok) throw new Error('Upload failed');
+
+        const container = form.parentElement; form.remove();
+        const done = document.createElement('div');
+        done.innerHTML = `
+          <div style="margin-top:8px;font-size:15px;font-weight:700;">Thanks!</div>
+          <div style="color:var(--muted);font-size:12px;margin-top:4px;">Your BOL has been submitted.</div>
+          <button class="btn secondary" id="back2" type="button" style="margin-top:14px;">Back to menu</button>
+        `;
+        container.appendChild(done);
+        document.getElementById('back2')?.addEventListener('click', () => location.href = "./");
+      } catch (err) {
+        showError('Error. Please try again.');
+        inFlight = false; lockForm(false);
+      }
+    }, { passive: false });
+  </script>
+</body>
+</html>
