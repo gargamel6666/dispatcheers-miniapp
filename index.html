@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Driver • Menu</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{
+      --bg: var(--tg-theme-secondary-bg-color, #0f1220);
+      --text: var(--tg-theme-text-color, #e6e6e6);
+      --muted: var(--tg-theme-hint-color, #9aa3b2);
+      --accent: var(--tg-theme-button-color, #4e8cff);
+      --accentText: var(--tg-theme-button-text-color, #fff);
+      --card: rgba(255,255,255,0.06);
+      --stroke: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.25);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
+        radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
+        var(--bg);
+      display: grid; place-items: center;
+      padding: 16px;
+    }
+    .card {
+      width: 100%; max-width: 520px;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 20px;
+    }
+    .head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .logo { width: 38px; height: 38px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      display: grid; place-items: center; color: var(--accentText); font-weight: 800;
+      box-shadow: 0 6px 16px rgba(0,0,0,.25); user-select: none; flex: 0 0 38px; }
+    h1 { font-size: 18px; line-height: 1.25; margin: 0; }
+    .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+    .tile {
+      border: 1px solid var(--stroke); border-radius: 16px; padding: 16px;
+      background: rgba(255,255,255,0.05); box-shadow: 0 6px 16px rgba(0,0,0,.15);
+      cursor: pointer; transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      user-select: none; display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 12px; min-height: 64px;
+    }
+    .tile:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.25); }
+    .tile:active { transform: translateY(0); }
+    .icn { height: 44px; width: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px;
+      background: linear-gradient(135deg, rgba(78,140,255,.15), rgba(124,58,237,.18)); border: 1px solid var(--stroke); }
+    .ttl { font-weight: 700; font-size: 15px; }
+    .desc { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .close { margin-top: 14px; width: 100%; border-radius: 14px; padding: 14px 16px;
+      border: 1px solid var(--stroke); background: transparent; color: var(--text);
+      font-weight: 600; cursor: pointer; transition: background .12s ease, transform .12s ease; }
+    .close:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+    .close:active { transform: translateY(0); }
+    a { color: inherit; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="head">
+      <div class="logo">⋯</div>
+      <div>
+        <h1>Driver Menu</h1>
+        <div class="sub">Choose an option</div>
+      </div>
+    </div>
+
+    <section class="grid">
+      <div class="tile" data-href="./upload.html">
+        <div class="icn">📤</div>
+        <div>
+          <div class="ttl">Upload BOL</div>
+          <div class="desc">Upload a BOL document</div>
+        </div>
+      </div>
+
+      <div class="tile" data-href="./trip.html">
+        <div class="icn">🚚</div>
+        <div>
+          <div class="ttl">Trip Form</div>
+          <div class="desc">Complete trip form</div>
+        </div>
+      </div>
+    </section>
+
+    <button class="close" id="close">Close</button>
+  </main>
+
+  <script>
+    const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+
+    // --- Supabase endpoints ---
+    const API_BASE = 'https://laybyqlfyqjuivshjhdn.supabase.co/functions/v1';
+    const ME_URL   = `${API_BASE}/rapid-function`; // проверка регистрации
+
+    // Проверка регистрации (1 раз за сессию)
+    const CACHE_KEY = 'me:v1';
+    const userId = tg?.initDataUnsafe?.user?.id || null;
+
+    async function ensureRegistered() {
+      try {
+        const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
+        if (cached && cached.userId === userId && cached.registered) return true;
+
+        const r = await fetch(ME_URL, {
+          method: 'POST',
+          headers: { 'content-type':'application/json', 'x-telegram-init-data': tg?.initData || '' },
+          body: '{}'
+        });
+        const data = await r.json();
+        const ok = !!data?.registered;
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ userId, registered: ok, profile: data?.profile || null }));
+        if (!ok) location.replace('./register.html');
+        return ok;
+      } catch {
+        location.replace('./register.html'); return false;
+      }
+    }
+
+    // Bootstrap: не даём пользоваться меню, если не зарегистрирован
+    ensureRegistered();
+
+    // Навигация по карточкам
+    document.querySelectorAll('.tile[data-href]').forEach(el => {
+      el.addEventListener('click', async () => {
+        if (!(await ensureRegistered())) return;
+        const raw = el.getAttribute('data-href') || '';
+        const url = new URL(raw, location.href);
+        if (url.origin === location.origin) {
+          location.href = url.href;
+        } else {
+          tg?.openLink(url.href, { try_instant_view: false });
+        }
+      });
+    });
+
+    document.getElementById('close')?.addEventListener('click', () => tg?.close());
+  </script>
+</body>
+</html>
