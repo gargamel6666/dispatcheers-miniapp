@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Driver • Registration</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body{margin:0;background:#0f1220;color:#e6e6e6;font:16px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;padding:16px;display:grid;place-items:start}
+    h2{margin:6px 0 4px} .muted{color:#9aa3b2;font-size:13px;margin-bottom:12px}
+    input,button{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#15182a;color:#fff;margin:8px 0}
+    button{background:#4e8cff;border-color:#4e8cff;font-weight:700}
+    .ghost{background:transparent}
+    .err{color:#ff8a8a;font-size:13px;display:none}
+  </style>
+</head>
+<body>
+  <div style="max-width:520px;width:100%">
+    <h2>Quick Registration</h2>
+    <div class="muted">We’ll link your Telegram account to the driver profile.</div>
+
+    <input id="phone" placeholder="Phone (optional)" />
+    <input id="email" placeholder="Email (optional)" />
+    <input id="company" placeholder="Company (optional)" />
+    <div id="err" class="err"></div>
+
+    <button id="submit">Continue</button>
+    <button class="ghost" id="cancel">Back</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+    const API_BASE = 'https://laybyqlfyqjuivshjhdn.supabase.co/functions/v1';
+    const REG_URL  = `${API_BASE}/register`;
+
+    function showErr(t){ const e=document.getElementById('err'); e.textContent=t; e.style.display='block'; }
+    function clearErr(){ const e=document.getElementById('err'); e.style.display='none'; e.textContent=''; }
+
+    document.getElementById('cancel')?.addEventListener('click', ()=> location.replace('./index.html'));
+
+    document.getElementById('submit')?.addEventListener('click', async ()=>{
+      clearErr();
+      const body = {
+        phone:   document.getElementById('phone').value || null,
+        email:   document.getElementById('email').value || null,
+        company: document.getElementById('company').value || null,
+        role: 'driver' // помечаем как водитель
+      };
+      try{
+        const r = await fetch(REG_URL, {
+          method:'POST',
+          headers:{ 'content-type':'application/json', 'x-telegram-init-data': tg?.initData || '' },
+          body: JSON.stringify(body)
+        });
+        if (!r.ok){ showErr(await r.text()); return; }
+        // кэшируем флаг регистрации на текущую сессию
+        const uid = tg?.initDataUnsafe?.user?.id || null;
+        sessionStorage.setItem('me:v1', JSON.stringify({ userId: uid, registered: true }));
+        location.replace('./index.html');
+      }catch(e){ showErr('Network error. Try again.'); }
+    });
+  </script>
+</body>
+</html>
