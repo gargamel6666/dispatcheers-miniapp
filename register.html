@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <title>Driver • Register</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Driver • Registration</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <meta name="color-scheme" content="dark light" />
   <style>
     :root{
       --bg: var(--tg-theme-secondary-bg-color, #0f1220);
@@ -14,140 +14,120 @@
       --accentText: var(--tg-theme-button-text-color, #fff);
       --card: rgba(255,255,255,0.06);
       --stroke: rgba(255,255,255,0.12);
-      --shadow: 0 10px 30px rgba(0,0,0,0.25);
       --radius: 18px;
+      --shadow: 0 10px 30px rgba(0,0,0,0.25);
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
-    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
-        radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
-        var(--bg);
-      display:grid; place-items:center;
-      padding: calc(8px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
-    }
-    .card{
-      width:100%; max-width:520px;
-      background:var(--card);
-      border:1px solid var(--stroke);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      padding:20px;
-    }
-    .head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-    .logo{
-      width:38px;height:38px;border-radius:12px;
-      background:linear-gradient(135deg,var(--accent),#7c3aed);
-      display:grid;place-items:center;color:var(--accentText);font-weight:800;
-      box-shadow:0 6px 16px rgba(0,0,0,.25);user-select:none;flex:0 0 38px;
-    }
-    h1{font-size:18px;line-height:1.25;margin:0}
-    .sub{color:var(--muted);font-size:13px;margin-top:4px}
-
-    label{display:block;margin:10px 2px 6px;color:var(--muted);font-size:13px}
-    input{
-      width:100%; padding:14px 14px; border-radius:14px;
-      border:1px solid var(--stroke);
-      background: rgba(255,255,255,0.05);
-      color:var(--text); font-size:16px;
-    }
-    input::placeholder{color:var(--muted)}
-    .row{display:flex; gap:10px; margin-top:14px}
-    .btn{
-      flex:1; border-radius:14px; padding:14px 16px;
-      border:1px solid var(--stroke); cursor:pointer; font-weight:700;
-      transition: transform .12s ease, opacity .12s ease;
-    }
-    .btn:active{ transform: translateY(1px); }
-    .primary{ background:var(--accent); color:var(--accentText); }
-    .ghost{ background:transparent; color:var(--text); }
-    .msg{ font-size:13px; margin-top:8px; display:none }
-    .err{ color:#ff9b9b }
-    .ok{ color:#9be29b }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;padding:0;background:radial-gradient(1200px 800px at 20% -10%, rgba(78,140,255,0.15), transparent 60%), radial-gradient(1000px 700px at 120% 110%, rgba(78,140,255,0.12), transparent 60%), var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial}
+    .wrap{min-height:100svh; padding:calc(12px + var(--safe-top)) 16px calc(20px + var(--safe-bottom)); display:flex; flex-direction:column; gap:16px}
+    .card{background:var(--card); border:1px solid var(--stroke); border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter: blur(10px); padding:16px}
+    .head{display:flex; gap:12px; align-items:center}
+    .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7aa5ff); box-shadow:0 6px 16px rgba(0,0,0,.25)}
+    h1{font-size:18px;margin:0 0 4px 0}
+    .muted{color:var(--muted); font-size:13px}
+    label{display:block; font-weight:600; margin:8px 0 6px}
+    input[type="text"]{width:100%; height:52px; border-radius:14px; border:1px solid var(--stroke); background:rgba(255,255,255,0.04); color:var(--text); padding:0 14px; outline:none}
+    .row{display:flex; gap:10px}
+    .btn{flex:1; padding:14px 16px; text-align:center; border-radius:14px; border:0; background:var(--accent); color:var(--accentText); font-weight:700; cursor:pointer}
+    .btn.secondary{background:transparent; color:var(--text); border:1px solid var(--stroke)}
+    .btn[disabled]{opacity:.6; pointer-events:none}
+    .error{color:#ff6b6b; font-size:13px; margin-top:8px}
+    .ok{color:#2ecc71; font-size:13px; margin-top:8px}
   </style>
 </head>
 <body>
-  <main class="card">
-    <div class="head">
-      <div class="logo">⋯</div>
-      <div>
-        <h1>Quick Registration</h1>
-        <div class="sub">We’ll link your Telegram account to the driver profile.</div>
+  <div class="wrap">
+    <div class="card">
+      <div class="head">
+        <div class="logo"></div>
+        <div>
+          <h1>Quick Registration</h1>
+          <div class="muted">We’ll link your Telegram account to the driver profile.</div>
+        </div>
       </div>
+      <label for="fullName">Full name</label>
+      <input id="fullName" type="text" inputmode="text" autocomplete="off" placeholder="e.g., Jake Lohov" />
+      <div id="msg" class="error" style="display:none"></div>
     </div>
 
-    <label for="full">Full name</label>
-    <input id="full" placeholder="Your full name" autocomplete="name" />
-
-    <div id="msg" class="msg"></div>
-
-    <div class="row">
-      <button id="back" class="btn ghost" type="button">Back</button>
-      <button id="submit" class="btn primary" type="button">Continue</button>
+    <div class="card">
+      <div class="row">
+        <button id="backBtn" class="btn secondary">Back</button>
+        <button id="goBtn" class="btn">Continue</button>
+      </div>
+      <div id="hint" class="muted" style="margin-top:8px"></div>
     </div>
-  </main>
+  </div>
 
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-    const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+    const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand?.();
 
-    const API_BASE = 'https://laybyqlfyqjuivshjhdn.supabase.co/functions/v1';
-    const REG_URL  = `${API_BASE}/-register`;
+    const API_BASE = 'https://eyeubidvqegcrseedlyz.supabase.co/functions/v1';
+    const ME_URL   = `${API_BASE}/rapid-function`;
+    const REG_URL  = `${API_BASE}/clever-action`;
+
+    const KEY_ME = 'me:v1';
+    const LOCK_PREFIX = 'register_lock_';
+
+    function getUserId(){ return tg?.initDataUnsafe?.user?.id ?? null; }
+    function writeCache(obj){ try{ sessionStorage.setItem(KEY_ME, JSON.stringify(obj)); }catch{} }
 
     const msg = document.getElementById('msg');
-    function show(type, text){
-      msg.className = 'msg ' + (type==='err' ? 'err' : 'ok');
-      msg.textContent = text;
-      msg.style.display = 'block';
-    }
-    function hide(){ msg.style.display = 'none'; msg.textContent = ''; }
+    function showError(t){ msg.textContent = t; msg.style.display='block'; msg.className='error'; }
+    function showOk(t){ msg.textContent = t; msg.style.display='block'; msg.className='ok'; }
 
-    document.getElementById('back')?.addEventListener('click', ()=> {
-      location.replace('./index.html');
-    });
+    document.getElementById('backBtn').onclick = () => location.replace('index.html');
 
     let inFlight = false;
-    document.getElementById('submit')?.addEventListener('click', async ()=>{
-      if (inFlight) return;
-      hide();
 
-      const full = (document.getElementById('full').value || '').trim();
-      if (!full){ show('err','Please enter your full name.'); return; }
+    async function doRegister(){
+      if(inFlight) return;
+      const fullName = (document.getElementById('fullName').value || '').trim();
+      if(!fullName){ showError('Please enter your full name.'); return; }
+
+      const uid = getUserId();
+      const lockKey = LOCK_PREFIX + (uid ?? 'nouser');
+      const now = Date.now();
+      const last = Number(localStorage.getItem(lockKey) || 0);
+      if (now - last < 60_000){
+        const left = Math.ceil((60_000 - (now-last))/1000);
+        showError(`Try again in ${left}s.`);
+        return;
+      }
 
       inFlight = true;
+      localStorage.setItem(lockKey, String(now));
+      const btn = document.getElementById('goBtn');
+      const hint = document.getElementById('hint');
+      btn.disabled = true; btn.textContent = 'Registering…'; hint.textContent = '';
+
       try{
         const res = await fetch(REG_URL, {
           method:'POST',
-          mode: 'cors',
           headers:{
             'content-type':'application/json',
             'x-telegram-init-data': tg?.initData || ''
           },
-          body: JSON.stringify({ full_name: full }) // роль задаётся на сервере DEFAULT_ROLE=driver
+          body: JSON.stringify({ full_name: fullName, _tg_meta:{initData: tg?.initData||'', user: tg?.initDataUnsafe?.user||null} })
         });
+        const body = await res.json().catch(()=>({}));
+        if(!res.ok){ throw new Error(body?.error || 'Network error'); }
 
-        if (!res.ok){
-          const text = await res.text().catch(()=> '');
-          show('err', text || `HTTP ${res.status}`);
-          inFlight = false;
-          return;
-        }
-
-        // кэш "зарегистрирован"
-        const uid = tg?.initDataUnsafe?.user?.id || null;
-        sessionStorage.setItem('me:v1', JSON.stringify({ userId: uid, registered: true }));
-        location.replace('./index.html');
+        writeCache({ userId: uid, registered:true, profile: { full_name: fullName } });
+        showOk('Registered!');
+        location.replace('index.html');
       }catch(e){
-        show('err','Network error. Try again.');
-        inFlight = false;
+        showError(String(e.message||e));
+        btn.disabled=false; btn.textContent='Continue';
+        inFlight=false;
       }
-    });
+    }
+
+    document.getElementById('goBtn').onclick = doRegister;
   </script>
 </body>
 </html>
+
