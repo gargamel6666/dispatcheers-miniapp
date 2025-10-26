@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Driver • Trip Form</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="dark light" />
+  <title>Trip report</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root{
+      /* Единые переменные как на index/register */
       --bg: var(--tg-theme-secondary-bg-color, #0f1220);
       --text: var(--tg-theme-text-color, #e6e6e6);
       --muted: var(--tg-theme-hint-color, #9aa3b2);
@@ -14,456 +15,576 @@
       --accentText: var(--tg-theme-button-text-color, #fff);
       --card: rgba(255,255,255,0.06);
       --stroke: rgba(255,255,255,0.12);
-      --radius: 18px;
       --shadow: 0 10px 30px rgba(0,0,0,0.25);
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --radius: 18px;
+
+      /* Старые локальные переменные перекинули на новые */
+      --primary: var(--accent);
+      --primary-600: var(--accent);
+      --err:#f43f5e;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:0;background:radial-gradient(1200px 800px at 20% -10%, rgba(78,140,255,0.15), transparent 60%), radial-gradient(1000px 700px at 120% 110%, rgba(78,140,255,0.12), transparent 60%), var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial}
-    .wrap{min-height:100svh; padding:calc(12px + var(--safe-top)) 16px calc(20px + var(--safe-bottom)); display:flex; flex-direction:column; gap:16px}
-    .card{background:var(--card); border:1px solid var(--stroke); border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter: blur(10px); padding:16px}
-    h1{font-size:18px;margin:0 0 4px 0}
-    .muted{color:var(--muted); font-size:13px}
-    label{display:block; font-weight:600; margin:8px 0 6px}
-    input[type="text"], input[type="date"], input[type="number"]{width:100%; height:52px; border-radius:14px; border:1px solid var(--stroke); background:rgba(255,255,255,0.04); color:var(--text); padding:0 14px; outline:none}
-    .row{display:flex; gap:10px}
-    .btn{padding:14px 16px; text-align:center; border-radius:14px; border:0; background:var(--accent); color:var(--accentText); font-weight:700; cursor:pointer}
-    .btn.block{display:block; width:100%}
-    .btn.secondary{background:transparent; color:var(--text); border:1px solid var(--stroke)}
-    .btn[disabled]{opacity:.6; pointer-events:none}
-    .tabs{display:flex; gap:6px; flex-wrap:wrap; margin:8px 0}
-    .chip{padding:8px 10px; border-radius:12px; border:1px solid var(--stroke); background:rgba(255,255,255,0.05); font-size:13px}
-    .error{color:#ff6b6b; font-size:13px; margin-top:8px}
-    .ok{color:#2ecc71; font-size:13px; margin-top:8px}
-    .hidden{display:none}
-    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    .controls{display:flex; gap:10px; margin-top:10px}
-    .sectionTitle{font-weight:800; margin:0 0 8px 0}
-    .small{font-size:13px}
-    .pair{display:flex; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px dashed var(--stroke)}
-    .pair:last-child{border-bottom:0}
-    .disabled{opacity:0.6; pointer-events:none}
+
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      color:var(--text);
+      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
+        radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
+        var(--bg);
+    }
+
+    /* Верхняя панель с кнопкой Назад и заголовком */
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      display:flex; align-items:center; gap:12px;
+      padding:14px 16px;
+      background: linear-gradient(180deg, rgba(15,18,32,.9), rgba(15,18,32,.65) 70%, rgba(15,18,32,0));
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--stroke);
+    }
+    .top-btn{
+      border:1px solid var(--stroke); background:transparent; color:var(--text);
+      padding:10px 12px; border-radius:14px; font-weight:700; cursor:pointer;
+    }
+    .top-btn:active{ transform: translateY(1px); }
+    .top-title{ font-weight:800; font-size:16px; }
+
+    .wrap{ max-width:720px; margin:0 auto; padding:16px; }
+
+    /* Карточки/секции в едином стиле */
+    .section{
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+    .title{ font-weight:700; font-size:18px; margin:0 0 6px }
+    .hint{ color:var(--muted); margin:0 0 16px }
+
+    .grid{ display:grid; gap:12px }
+    .grid-2{ grid-template-columns:1fr 1fr }
+
+    .card{
+      background: rgba(255,255,255,0.05);
+      border:1px solid var(--stroke);
+      border-radius:14px; padding:14px;
+    }
+    label{ display:block; margin:4px 2px 6px 2px; color:var(--muted); font-size:13px }
+    input{
+      width:100%; border:1px solid var(--stroke); color:var(--text);
+      background: rgba(255,255,255,0.04);
+      border-radius:14px; padding:14px 14px; font-size:16px; outline:none;
+    }
+    input[type="date"]{ appearance:none; -webkit-appearance:none }
+
+    .btn{
+      background: var(--accent); color: var(--accentText);
+      border:none; border-radius:14px; padding:14px 18px; font-weight:800; cursor:pointer;
+    }
+    .btn:active{ transform: translateY(1px) }
+    .ghost{
+      background:transparent; border:1px solid var(--stroke); color:var(--text); font-weight:700;
+    }
+    .btn[disabled]{ opacity:.6; pointer-events:none; }
+
+    .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px }
+    .chip{
+      background: rgba(255,255,255,0.05);
+      border:1px solid var(--stroke);
+      color: var(--text);
+      border-radius:999px; padding:8px 12px; font-weight:700; cursor:pointer;
+    }
+    .chip.active{ background:linear-gradient(135deg, rgba(78,140,255,.15), rgba(124,58,237,.18)); }
+
+    .row{ display:flex; gap:12px }
+    .footer{ display:flex; gap:12px; justify-content:space-between; margin-top:16px }
+
+    .err{ color:var(--err); margin:6px 2px 0 2px; font-size:14px }
+    [hidden]{ display:none !important }
+
+    /* review pretty view (only Trip / Loads / Expenses) */
+    .review-block{ margin-top:12px }
+    .rv-title{ font-weight:700; margin:6px 0 8px }
+    .kv{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+      border-radius:14px; overflow:hidden
+    }
+    .kv-row{ display:flex; gap:12px; padding:10px 12px; border-top:1px solid var(--stroke) }
+    .kv-row:first-child{ border-top:none }
+    .kv-k{ min-width:160px; color:var(--muted) }
+
+    .banner{
+      margin:10px 0; padding:10px 12px; border-radius:14px;
+      border:1px solid var(--stroke); background: rgba(255,255,255,0.04);
+      color: var(--text); font-size:14px;
+    }
+    .banner.error{ border-color: rgba(255,0,0,.35); color:#ff6b6b; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Trip Form</h1>
-      <div class="muted">Trip → Loads → Expenses → Review → Submit</div>
-    </div>
 
-    <!-- Step containers -->
-    <div id="step1" class="card">
-      <div class="sectionTitle">Step 1 — Trip</div>
-      <div class="grid2">
-        <div>
-          <label>Start location</label>
-          <input id="startLoc" type="text" placeholder="City, ST" />
-        </div>
-        <div>
-          <label>Start date</label>
-          <input id="startDate" type="date" />
-        </div>
-        <div>
-          <label>Start mileage *</label>
-          <input id="startMiles" type="number" inputmode="numeric" placeholder="e.g., 100000" />
-        </div>
-        <div>
-          <label>Finish location</label>
-          <input id="finishLoc" type="text" placeholder="City, ST" />
-        </div>
-        <div>
-          <label>Finish date</label>
-          <input id="finishDate" type="date" />
-        </div>
-        <div>
-          <label>Finish mileage *</label>
-          <input id="finishMiles" type="number" inputmode="numeric" placeholder="e.g., 101235" />
-        </div>
-      </div>
-      <div id="tripErr" class="error hidden"></div>
-      <div class="controls">
-        <button id="to2" class="btn block">Next: Loads</button>
-      </div>
-    </div>
-
-    <div id="step2" class="card hidden">
-      <div class="sectionTitle">Step 2 — Loads</div>
-      <div class="tabs" id="loadTabs"></div>
-      <div id="loadsContainer"></div>
-      <div class="controls">
-        <button id="addLoad" class="btn secondary">+ Add load</button>
-        <button id="to3" class="btn">Next: Expenses</button>
-      </div>
-      <div id="loadErr" class="error hidden"></div>
-    </div>
-
-    <div id="step3" class="card hidden">
-      <div class="sectionTitle">Step 3 — Expenses</div>
-      <div id="expList"></div>
-      <div class="controls">
-        <button id="addExp" class="btn secondary">+ Add expense</button>
-        <button id="to4" class="btn">Next: Review</button>
-      </div>
-    </div>
-
-    <div id="step4" class="card hidden">
-      <div class="sectionTitle">Step 4 — Review</div>
-      <div id="review"></div>
-      <div id="submitMsg" class="error hidden"></div>
-      <div class="controls">
-        <button id="back3" class="btn secondary">Back</button>
-        <button id="submitBtn" class="btn">Submit</button>
-      </div>
-      <div id="ok" class="ok hidden" style="margin-top:8px"></div>
-    </div>
-
-    <div class="card">
-      <button id="backBtn" class="btn secondary block">Back to menu</button>
-    </div>
+  <!-- Top bar with Back -->
+  <div class="topbar">
+    <button id="backMenuBtn" class="top-btn" type="button">← Back to menu</button>
+    <div class="top-title">Trip report</div>
   </div>
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script>
-    const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand?.();
+  <div class="wrap">
 
-    const API_BASE = 'https://eyeubidvqegcrseedlyz.supabase.co/functions/v1';
-    const ME_URL   = `${API_BASE}/rapid-function`;
-    const REG_URL  = `${API_BASE}/clever-action`;
+    <!-- Guard error banner -->
+    <div id="guardError" class="banner error" hidden></div>
 
-    const WEBHOOK_URL = 'https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235';
-    const KEY_ME = 'me:v1';
+    <!-- STEP 1: Trip -->
+    <section id="step_trip" class="section">
+      <div class="title">Trip report</div>
+      <p class="hint">Fill out trip, loads and expenses. Your Telegram ID will be captured automatically.</p>
 
-    function getUserId(){ return tg?.initDataUnsafe?.user?.id ?? null; }
-    function readCache(){ try{ return JSON.parse(sessionStorage.getItem(KEY_ME)||'null'); }catch{ return null; } }
-    function writeCache(obj){ try{ sessionStorage.setItem(KEY_ME, JSON.stringify(obj)); }catch{} }
-
-    async function fetchMe(){
-      const res = await fetch(ME_URL, {
-        method:'POST',
-        headers:{
-          'content-type':'application/json',
-          'x-telegram-init-data': tg?.initData || ''
-        },
-        body: JSON.stringify({_tg_meta:{initData: tg?.initData||'', user: tg?.initDataUnsafe?.user||null}})
-      });
-      if(!res.ok) throw new Error('Network error');
-      return await res.json();
-    }
-
-    async function ensureRegistered(){
-      const uid = getUserId();
-      const cached = readCache();
-      if (cached && cached.userId === uid && cached.registered) return cached;
-      const data = await fetchMe();
-      const payload = { userId: uid, registered: !!data?.registered, profile: data?.profile || null };
-      writeCache(payload);
-      if (!payload.registered){ location.replace('register.html'); return null; }
-      return payload;
-    }
-
-    // Guard on load
-    (async () => { try{ await ensureRegistered(); }catch{ /* soft */ } })();
-
-    // Step handling
-    const step1 = document.getElementById('step1');
-    const step2 = document.getElementById('step2');
-    const step3 = document.getElementById('step3');
-    const step4 = document.getElementById('step4');
-
-    function showStep(n){
-      [step1,step2,step3,step4].forEach((el,i)=> el.classList.toggle('hidden', i!==n-1));
-    }
-
-    // Trip fields
-    const startLoc = document.getElementById('startLoc');
-    const startDate = document.getElementById('startDate');
-    const startMiles = document.getElementById('startMiles');
-    const finishLoc = document.getElementById('finishLoc');
-    const finishDate = document.getElementById('finishDate');
-    const finishMiles = document.getElementById('finishMiles');
-
-    document.getElementById('backBtn').onclick = () => location.replace('index.html');
-
-    // Step1 -> Step2
-    document.getElementById('to2').onclick = () => {
-      const sMiles = Number(startMiles.value || 0);
-      const fMiles = Number(finishMiles.value || 0);
-      const err = document.getElementById('tripErr');
-      if (!sMiles || !fMiles){
-        err.textContent = 'Start mileage and Finish mileage are required.'; err.classList.remove('hidden'); return;
-      }
-      if (fMiles < sMiles){
-        err.textContent = 'Finish mileage must be greater than or equal to Start mileage.'; err.classList.remove('hidden'); return;
-      }
-      err.classList.add('hidden');
-      showStep(2);
-    };
-
-    // Loads dynamic
-    const loadsContainer = document.getElementById('loadsContainer');
-    const loadTabs = document.getElementById('loadTabs');
-    let loads = [];
-
-    function newLoad(){
-      return { date:'', pickup:'', delivery:'', partial:false, tarp:false };
-    }
-
-    function renderLoads(){
-      loadTabs.innerHTML = '';
-      loadsContainer.innerHTML = '';
-      loads.forEach((l,idx)=>{
-        const tab = document.createElement('div');
-        tab.className='chip';
-        tab.textContent = `Load ${idx+1}`;
-        loadTabs.appendChild(tab);
-
-        const wrap = document.createElement('div');
-        wrap.className='card';
-        wrap.style.padding='12px';
-        wrap.style.margin='8px 0';
-
-        wrap.innerHTML = `
-          <div class="grid2">
-            <div>
-              <label class="small">Date</label>
-              <input type="date" data-k="date" data-i="${idx}" value="${l.date||''}"/>
-            </div>
-            <div>
-              <label class="small">Pickup</label>
-              <input type="text" placeholder="City, ST" data-k="pickup" data-i="${idx}" value="${escapeAttr(l.pickup||'')}"/>
-            </div>
-            <div>
-              <label class="small">Delivery</label>
-              <input type="text" placeholder="City, ST" data-k="delivery" data-i="${idx}" value="${escapeAttr(l.delivery||'')}"/>
-            </div>
-            <div>
-              <label class="small">Partial</label>
-              <input type="checkbox" data-k="partial" data-i="${idx}" ${l.partial?'checked':''} style="height:52px;width:52px;border-radius:14px;"/>
-            </div>
-            <div>
-              <label class="small">Tarp</label>
-              <input type="checkbox" data-k="tarp" data-i="${idx}" ${l.tarp?'checked':''} style="height:52px;width:52px;border-radius:14px;"/>
-            </div>
+      <div class="grid">
+        <div class="card">
+          <label>Start location</label>
+          <input id="start_location" placeholder="City, ST">
+        </div>
+        <div class="grid grid-2">
+          <div class="card">
+            <label>Start date</label>
+            <input id="start_date" type="date">
           </div>
-          <div class="controls">
-            <button class="btn secondary" data-remove="${idx}">Remove load</button>
+          <div class="card">
+            <label>Start mileage</label>
+            <input id="start_mileage" inputmode="numeric" placeholder="e.g., 102345">
           </div>
-        `;
-        loadsContainer.appendChild(wrap);
-      });
-
-      loadsContainer.querySelectorAll('input').forEach(inp=>{
-        const k = inp.dataset.k, i = Number(inp.dataset.i);
-        if (k === 'partial' || k === 'tarp') {
-          inp.onchange = () => { loads[i][k] = !!inp.checked; };
-        } else {
-          inp.oninput = () => { loads[i][k] = inp.value; };
-        }
-      });
-      loadsContainer.querySelectorAll('[data-remove]').forEach(btn=>{
-        btn.onclick = () => {
-          const i = Number(btn.dataset.remove);
-          loads.splice(i,1);
-          if (loads.length===0) loads.push(newLoad());
-          renderLoads();
-        };
-      });
-    }
-
-    function hasAtLeastOneLoadFilled(){
-      return loads.some(l => (l.date||l.pickup||l.delivery||l.partial||l.tarp));
-    }
-
-    document.getElementById('addLoad').onclick = () => { loads.push(newLoad()); renderLoads(); };
-
-    // Init with one load
-    loads.push(newLoad());
-    renderLoads();
-
-    // Step2 -> Step3
-    document.getElementById('to3').onclick = () => {
-      const err = document.getElementById('loadErr');
-      if (!hasAtLeastOneLoadFilled()){
-        err.textContent = 'Please fill at least one field in Loads (date/pickup/delivery/partial/tarp).';
-        err.classList.remove('hidden');
-        return;
-      }
-      err.classList.add('hidden');
-      showStep(3);
-    };
-
-    // Expenses dynamic
-    const expList = document.getElementById('expList');
-    let expenses = [];
-
-    function newExpense(){ return { name:'', price:'' }; }
-
-    function renderExpenses(){
-      expList.innerHTML = '';
-      expenses.forEach((e,idx)=>{
-        const wrap = document.createElement('div');
-        wrap.className='card';
-        wrap.style.padding='12px';
-        wrap.style.margin='8px 0';
-        wrap.innerHTML = `
-          <div class="grid2">
-            <div>
-              <label class="small">Name</label>
-              <input type="text" data-k="name" data-i="${idx}" placeholder="e.g., Parking" value="${escapeAttr(e.name||'')}"/>
-            </div>
-            <div>
-              <label class="small">Price</label>
-              <input type="number" inputmode="decimal" data-k="price" data-i="${idx}" placeholder="e.g., 12.50" value="${escapeAttr(e.price||'')}"/>
-            </div>
+        </div>
+        <div class="card">
+          <label>Finish location</label>
+          <input id="finish_location" placeholder="City, ST">
+        </div>
+        <div class="grid grid-2">
+          <div class="card">
+            <label>Finish date</label>
+            <input id="finish_date" type="date">
           </div>
-          <div class="controls">
-            <button class="btn secondary" data-expremove="${idx}">Remove</button>
+          <div class="card">
+            <label>Finish mileage</label>
+            <input id="finish_mileage" inputmode="numeric" placeholder="e.g., 103210">
           </div>
-        `;
-        expList.appendChild(wrap);
-      });
-      expList.querySelectorAll('input').forEach(inp=>{
-        const k = inp.dataset.k, i = Number(inp.dataset.i);
-        inp.oninput = () => { expenses[i][k] = inp.value; };
-      });
-      expList.querySelectorAll('[data-expremove]').forEach(btn=>{
-        btn.onclick = () => { const i = Number(btn.dataset.expremove); expenses.splice(i,1); renderExpenses(); };
-      });
+        </div>
+        <div id="trip_err" class="err" hidden></div>
+      </div>
+
+      <div class="footer">
+        <button class="btn" type="button" onclick="goStep('loads')">Next → Loads</button>
+        <button class="btn ghost" type="button" onclick="backToMenu()">← Back</button>
+      </div>
+    </section>
+
+    <!-- STEP 2: Loads -->
+    <section id="step_loads" class="section" hidden>
+      <div class="title">Loads</div>
+      <p class="hint">Add one or more loads. Partial/Tarp are quantities (can be 0 or empty).</p>
+
+      <div id="loadChips" class="chips"></div>
+      <div id="loadCard" class="card"></div>
+      <div id="loads_err" class="err" hidden></div>
+
+      <div class="footer">
+        <div class="row">
+          <button class="btn ghost" type="button" onclick="addLoad()">+ Add load</button>
+          <button class="btn ghost" type="button" onclick="removeCurrentLoad()">Remove current</button>
+        </div>
+        <div class="row">
+          <button class="btn ghost" type="button" onclick="goStep('trip')">← Back</button>
+          <button class="btn" type="button" onclick="goStep('expenses')">Next → Expenses</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3: Expenses -->
+    <section id="step_expenses" class="section" hidden>
+      <div class="title">Expenses</div>
+      <p class="hint">Optional. Add fuel, parking, wash, etc.</p>
+
+      <div id="expList" class="grid"></div>
+      <div class="row">
+        <button class="btn" type="button" onclick="addExpense()">+ Add expense</button>
+      </div>
+
+      <div class="footer">
+        <button class="btn" type="button" onclick="goStep('review')">Next → Review</button>
+        <button class="btn ghost" type="button" onclick="goStep('loads')">← Back</button>
+      </div>
+    </section>
+
+    <!-- STEP 4: Review -->
+    <section id="step_review" class="section" hidden>
+      <div class="title">Review & submit</div>
+      <div id="reviewBox" class="review-block"></div>
+
+      <div id="submit_err" class="err" hidden></div>
+
+      <div class="footer">
+        <button id="submitBtn" class="btn" type="button" onclick="submitTrip()">Submit</button>
+        <button class="btn ghost" type="button" onclick="goStep('expenses')">← Back</button>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+/* ---------- Telegram init ---------- */
+const tg = window.Telegram?.WebApp;
+if (tg){ tg.ready(); tg.expand(); tg.MainButton.hide(); }
+
+/* ---------- API guard (как на index/register) ---------- */
+const API_BASE = 'https://eyeubidvqegcrseedlyz.supabase.co/functions/v1';
+const ME_URL   = `${API_BASE}/rapid-function`;
+const REG_URL  = `${API_BASE}/clever-action`;
+const KEY_ME   = 'me:v1';
+
+function getUserId(){ return tg?.initDataUnsafe?.user?.id ?? null; }
+function readCache(){
+  try{ return JSON.parse(sessionStorage.getItem(KEY_ME) || 'null'); }catch{ return null; }
+}
+function writeCache(obj){
+  try{ sessionStorage.setItem(KEY_ME, JSON.stringify(obj)); }catch{}
+}
+async function fetchMe(){
+  const res = await fetch(ME_URL, {
+    method:'POST',
+    headers:{
+      'content-type':'application/json',
+      'x-telegram-init-data': tg?.initData || ''
+    },
+    body: JSON.stringify({_tg_meta:{initData: tg?.initData||'', user: tg?.initDataUnsafe?.user||null}})
+  });
+  if(!res.ok) throw new Error('Network error');
+  return await res.json();
+}
+async function ensureRegistered(){
+  const uid = getUserId();
+  const cached = readCache();
+  if (cached && cached.userId === uid && cached.registered) return cached;
+
+  const data = await fetchMe();
+  const payload = { userId: uid, registered: !!data?.registered, profile: data?.profile || null };
+  writeCache(payload);
+  if (!payload.registered) {
+    location.replace('register.html');
+    return null;
+  }
+  return payload;
+}
+function showGuardError(msg){
+  const el = document.getElementById('guardError');
+  el.textContent = msg;
+  el.hidden = false;
+}
+
+/* ---------- Back routing ---------- */
+function backToMenu(){
+  try { location.replace('index.html'); }
+  catch(e){}
+  finally{
+    // fallback на закрытие, если открыт в отдельной вкладке
+    setTimeout(()=> tg?.close?.(), 150);
+  }
+}
+
+/* ---------- Original trip.html logic (без изменений формата) ---------- */
+const WEBHOOK_URL = 'https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235';
+
+const state = {
+  step: 'trip',
+  loads: [],
+  currentLoadIndex: 0,
+  expenses: [],
+};
+let inFlight = false;
+
+function goStep(step){
+  if (step==='loads' && !validateTrip()) return;
+  if (step==='review'){
+    if (!validateTrip() || !validateLoads()) return;
+    renderReview();
+  }
+  state.step = step;
+  document.getElementById('step_trip').hidden = step!=='trip';
+  document.getElementById('step_loads').hidden = step!=='loads';
+  document.getElementById('step_expenses').hidden = step!=='expenses';
+  document.getElementById('step_review').hidden = step!=='review';
+}
+
+function validateTrip(){
+  const startLoc = val('start_location');
+  const finishLoc = val('finish_location');
+  const startMil = Number(val('start_mileage')||'');
+  const finishMil = Number(val('finish_mileage')||'');
+  const err = document.getElementById('trip_err');
+
+  if (!startLoc || !finishLoc){ err.textContent='Enter start and finish locations.'; err.hidden=false; return false; }
+  if (Number.isNaN(startMil) || Number.isNaN(finishMil)){ err.textContent='Mileage must be numbers.'; err.hidden=false; return false; }
+  if (finishMil < startMil){ err.textContent='Finish mileage must be ≥ start mileage.'; err.hidden=false; return false; }
+  err.hidden=true; return true;
+}
+function val(id){ return (document.getElementById(id)?.value || '').trim(); }
+
+function addLoad(){
+  state.loads.push({date:'', pickup:'', delivery:'', partial:'', tarp:''});
+  state.currentLoadIndex = state.loads.length-1;
+  renderLoads();
+}
+function removeCurrentLoad(){
+  if (!state.loads.length) return;
+  state.loads.splice(state.currentLoadIndex,1);
+  if (state.currentLoadIndex >= state.loads.length) state.currentLoadIndex = Math.max(0, state.loads.length-1);
+  renderLoads();
+}
+function saveCurrentLoad(){
+  const i = state.currentLoadIndex;
+  if (state.loads[i]){
+    const card = document.getElementById('loadCard');
+    const q = (name)=> card.querySelector(`[name="${name}"]`);
+    state.loads[i].date     = q('date')?.value || '';
+    state.loads[i].pickup   = q('pickup')?.value || '';
+    state.loads[i].delivery = q('delivery')?.value || '';
+    state.loads[i].partial  = q('partial')?.value || '';
+    state.loads[i].tarp     = q('tarp')?.value || '';
+  }
+}
+function hasT(s){ return !!(s && String(s).trim()); }
+function hasN(s){ const n=Number(s); return !Number.isNaN(n) && s!==''; }
+function isLoadFilled(L){
+  return hasT(L.pickup)||hasT(L.delivery)||hasT(L.date)||hasN(L.partial)||hasN(L.tarp);
+}
+function validateLoads(){
+  saveCurrentLoad();
+  const err=document.getElementById('loads_err');
+  if (state.loads.length===0){ err.textContent='Add at least 1 load.'; err.hidden=false; return false; }
+  if (!state.loads.some(isLoadFilled)){ err.textContent='Please fill at least one field in any load (Date, Pickup, Delivery or Number for Partial/Tarp).'; err.hidden=false; return false; }
+  err.hidden=true; return true;
+}
+function renderLoads(){
+  if (state.loads.length===0) state.loads=[{date:'',pickup:'',delivery:'',partial:'',tarp:''}];
+  const chips=document.getElementById('loadChips'); chips.innerHTML='';
+  state.loads.forEach((_,idx)=>{
+    const b=document.createElement('button');
+    b.className='chip'+(idx===state.currentLoadIndex?' active':'');
+    b.textContent = `Load #${idx+1}`;
+    b.onclick=()=>{ saveCurrentLoad(); state.currentLoadIndex=idx; renderLoads(); };
+    chips.appendChild(b);
+  });
+
+  const i=state.currentLoadIndex, L=state.loads[i]; const card=document.getElementById('loadCard');
+  card.innerHTML=`
+    <div class="grid">
+      <div>
+        <label>Date</label>
+        <input type="date" name="date" value="${L.date||''}">
+      </div>
+      <div>
+        <label>Pickup location</label>
+        <input name="pickup" placeholder="City, ST" value="${esc(L.pickup||'')}">
+      </div>
+      <div>
+        <label>Delivery location</label>
+        <input name="delivery" placeholder="City, ST" value="${esc(L.delivery||'')}">
+      </div>
+      <div class="grid grid-2">
+        <div>
+          <label>Partial (qty)</label>
+          <input name="partial" inputmode="numeric" placeholder="e.g., 1" value="${esc(L.partial||'')}">
+        </div>
+        <div>
+          <label>Tarp (qty)</label>
+          <input name="tarp" inputmode="numeric" placeholder="e.g., 2" value="${esc(L.tarp||'')}">
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addExpense(){
+  state.expenses.push({ name:'', price:'' });
+  renderExpenses();
+}
+function removeExpense(idx){
+  state.expenses.splice(idx,1);
+  renderExpenses();
+}
+function renderExpenses(){
+  const box=document.getElementById('expList'); box.innerHTML='';
+  if (state.expenses.length===0){ state.expenses=[{name:'',price:''}]; }
+  state.expenses.forEach((e,idx)=>{
+    const row=document.createElement('div'); row.className='card';
+    row.innerHTML = `
+      <div class="grid grid-2">
+        <div>
+          <label>Item</label>
+          <input data-i="${idx}" data-k="name" placeholder="Fuel / Parking / Wash" value="${esc(e.name||'')}">
+        </div>
+        <div>
+          <label>Price</label>
+          <input inputmode="decimal" data-i="${idx}" data-k="price" placeholder="e.g., 25.50" value="${esc(e.price||'')}">
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn ghost" type="button" onclick="removeExpense(${idx})">Remove</button>
+      </div>
+    `;
+    box.appendChild(row);
+  });
+  box.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', (e)=>{
+      const i=Number(e.target.dataset.i), k=e.target.dataset.k;
+      state.expenses[i][k]=e.target.value;
+    });
+  });
+}
+
+function renderReview(){
+  const payload = buildPayload(true);
+  const rv = [];
+
+  // Trip
+  rv.push(`<div class="rv-title">Trip</div>`);
+  rv.push(`<div class="kv">
+    ${row('Start location', payload.trip.start_location)}
+    ${row('Start date',     payload.trip.start_date||'')}
+    ${row('Start mileage',  payload.trip.start_mileage)}
+    ${row('Finish location',payload.trip.finish_location)}
+    ${row('Finish date',    payload.trip.finish_date||'')}
+    ${row('Finish mileage', payload.trip.finish_mileage)}
+  </div>`);
+
+  // Loads
+  rv.push(`<div class="rv-title" style="margin-top:10px">Loads${payload.loads?.length?` (${payload.loads.length})`:''}</div>`);
+  if (payload.loads && payload.loads.length){
+    payload.loads.forEach((L,idx)=>{
+      const Lrows = [];
+      if (L.date)     Lrows.push(row('Date', L.date));
+      if (L.pickup)   Lrows.push(row('Pickup', L.pickup));
+      if (L.delivery) Lrows.push(row('Delivery', L.delivery));
+      if (L.partial!=='' && L.partial!=null) Lrows.push(row('Partial (qty)', L.partial));
+      if (L.tarp!=='' && L.tarp!=null)       Lrows.push(row('Tarp (qty)', L.tarp));
+      rv.push(`<div class="kv rv-load">
+        <div class="kv-row"><div class="kv-k">Load</div><div>#${idx+1}</div></div>
+        ${Lrows.join('')}
+      </div>`);
+    });
+  } else {
+    rv.push(`<div class="kv"><div class="kv-row"><div class="kv-k">—</div><div>No loads</div></div></div>`);
+  }
+
+  // Expenses
+  const exps = (payload.expenses||[]).filter(e=> (e.name&&e.name.trim()) || (e.price!=='' && !Number.isNaN(Number(e.price))));
+  rv.push(`<div class="rv-title" style="margin-top:10px">Expenses${exps.length?` (${exps.length})`:''}</div>`);
+  if (exps.length){
+    exps.forEach((e,idx)=> rv.push(
+      `<div class="kv rv-load">
+         <div class="kv-row"><div class="kv-k">Item</div><div>#${idx+1}</div></div>
+         ${e.name?row('Name',e.name):''}
+         ${e.price!==''?row('Price',e.price):''}
+       </div>`
+    ));
+  } else {
+    rv.push(`<div class="kv"><div class="kv-row"><div class="kv-k">—</div><div>No expenses</div></div></div>`);
+  }
+
+  document.getElementById('reviewBox').innerHTML = rv.join('');
+
+  function row(k,v){ return `<div class="kv-row"><div class="kv-k">${esc(k)}</div><div>${esc(String(v||''))}</div></div>`; }
+}
+
+// Payload
+function buildPayload(forPreview=false){
+  saveCurrentLoad();
+  const payload = {
+    trip:{
+      start_location: val('start_location'),
+      start_date: document.getElementById('start_date')?.value || '',
+      start_mileage: Number(val('start_mileage')||'0'),
+      finish_location: val('finish_location'),
+      finish_date: document.getElementById('finish_date')?.value || '',
+      finish_mileage: Number(val('finish_mileage')||'0'),
+    },
+    loads: state.loads.map(L=>({
+      date: L.date||'',
+      pickup: L.pickup||'',
+      delivery: L.delivery||'',
+      partial: L.partial,
+      tarp: L.tarp
+    })),
+    expenses: state.expenses.map(e=>({ name:e.name||'', price:e.price||'' })),
+    client_token: tg?.initData || '',
+    _tg_meta: {
+      initData: tg?.initData || '',
+      user: tg?.initDataUnsafe?.user || null
     }
+  };
+  return payload;
+}
 
-    document.getElementById('addExp').onclick = () => { expenses.push(newExpense()); renderExpenses(); };
+let lockBtn=false;
+function lockSubmit(on){
+  const b=document.getElementById('submitBtn');
+  if (on){ b.setAttribute('disabled',''); b.textContent='Submitting…'; lockBtn=true; }
+  else { b.removeAttribute('disabled'); b.textContent='Submit'; lockBtn=false; }
+}
+function showSubmitError(msg){ const e=document.getElementById('submit_err'); e.textContent=msg; e.hidden=false; }
+function clearSubmitError(){ document.getElementById('submit_err').hidden=true; }
 
-    // Step3 -> Step4 (Review)
-    document.getElementById('to4').onclick = () => {
-      renderReview();
-      showStep(4);
-    };
+// utils
+function esc(s){return (s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
 
-    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-    function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+// Submit with anti-dup & x-telegram-init-data header
+async function submitTrip(){
+  if (inFlight) return;
+  if (!validateTrip() || !validateLoads()) return;
 
-    function pair(label, value){ return `<div class="pair"><div class="muted">${escapeHtml(label)}</div><div>${escapeHtml(value)}</div></div>`; }
+  const userId = tg?.initDataUnsafe?.user?.id || 'anon';
+  const lk = `trip_submit_lock_${userId}`, last = Number(localStorage.getItem(lk)||'0'), now = Date.now();
+  if (now-last<120000){ showSubmitError('You have recently submitted a trip. Please try again in a minute.'); return; }
 
-    function renderReview(){
-      const rev = document.getElementById('review');
-      const trip = {
-        start_location: startLoc.value || '',
-        start_date: startDate.value || '',
-        start_mileage: Number(startMiles.value || 0),
-        finish_location: finishLoc.value || '',
-        finish_date: finishDate.value || '',
-        finish_mileage: Number(finishMiles.value || 0),
-      };
-      let html = `<div class="sectionTitle">Trip</div>`;
-      html += pair('Start location', trip.start_location);
-      html += pair('Start date', trip.start_date);
-      html += pair('Start mileage', String(trip.start_mileage));
-      html += pair('Finish location', trip.finish_location);
-      html += pair('Finish date', trip.finish_date);
-      html += pair('Finish mileage', String(trip.finish_mileage));
+  const payload = buildPayload(false);
+  clearSubmitError(); lockSubmit(true);
+  try{
+    const res = await fetch(WEBHOOK_URL,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-telegram-init-data': tg?.initData || ''
+      },
+      body:JSON.stringify(payload)
+    });
+    if (!res.ok){ throw new Error(`HTTP ${res.status}: ${await res.text()}`); }
+    localStorage.setItem(lk,String(now));
+    if (tg){ tg.showPopup({message:'Submitted! Thank you.'}); tg.close(); } else alert('Submitted!');
+  }catch(e){ showSubmitError(e.message||'Submit error'); }
+  finally{ lockSubmit(false); }
+}
 
-      html += `<div class="sectionTitle" style="margin-top:12px">Loads</div>`;
-      loads.forEach((l,i)=>{
-        html += `<div class="muted" style="margin-top:6px">Load ${i+1}</div>`;
-        html += pair('Date', l.date||'');
-        html += pair('Pickup', l.pickup||'');
-        html += pair('Delivery', l.delivery||'');
-        html += pair('Partial', l.partial?'Yes':'No');
-        html += pair('Tarp', l.tarp?'Yes':'No');
-      });
+/* ---------- init ---------- */
+(async ()=>{
+  try{
+    const me = await ensureRegistered();
+    if(!me) return; // был редирект на register.html
+  }catch(e){
+    showGuardError('Failed to verify registration. Pull to refresh or try again.');
+  }
 
-      html += `<div class="sectionTitle" style="margin-top:12px">Expenses</div>`;
-      if(expenses.length===0){ html += `<div class="muted">No expenses.</div>`; }
-      else{
-        expenses.forEach((e,i)=>{
-          html += `<div class="muted" style="margin-top:6px">Expense ${i+1}</div>`;
-          html += pair('Name', e.name||'');
-          html += pair('Price', String(e.price||'')); 
-        });
-      }
+  if (state.loads.length===0) state.loads=[{date:'',pickup:'',delivery:'',partial:'',tarp:''}];
+  renderLoads();
 
-      rev.innerHTML = html;
-    }
-
-    // Submit
-    const submitBtn = document.getElementById('submitBtn');
-    const submitMsg = document.getElementById('submitMsg');
-    const okBox = document.getElementById('ok');
-
-    function showSubmitErr(t){ submitMsg.textContent=t; submitMsg.classList.remove('hidden'); okBox.classList.add('hidden'); }
-    function showSubmitOk(t){ okBox.textContent=t; okBox.classList.remove('hidden'); submitMsg.classList.add('hidden'); }
-
-    function getTrip(){
-      return {
-        start_location: startLoc.value || '',
-        start_date: startDate.value || '',
-        start_mileage: Number(startMiles.value || 0),
-        finish_location: finishLoc.value || '',
-        finish_date: finishDate.value || '',
-        finish_mileage: Number(finishMiles.value || 0),
-      };
-    }
-
-    const SUBMIT_LOCK_PREFIX = 'trip_submit_lock_';
-
-    async function doSubmit(){
-      const me = await ensureRegistered(); if(!me) return;
-
-      const t = getTrip();
-      if(!(t.start_mileage && t.finish_mileage)){
-        showSubmitErr('Trip mileages are required.'); return;
-      }
-      if(t.finish_mileage < t.start_mileage){
-        showSubmitErr('Finish mileage must be ≥ Start mileage.'); return;
-      }
-
-      const uid = getUserId();
-      const lockKey = SUBMIT_LOCK_PREFIX + (uid ?? 'nouser');
-      const now = Date.now();
-      const last = Number(localStorage.getItem(lockKey) || 0);
-      if (now - last < 120_000){
-        const left = Math.ceil((120_000 - (now-last))/1000);
-        showSubmitErr(`Please wait ${left}s before submitting again.`);
-        return;
-      }
-
-      submitBtn.disabled = true; submitBtn.textContent='Submitting…';
-      document.body.querySelector('.wrap').classList.add('disabled');
-
-      const payload = {
-        _tg_meta: { initData: tg?.initData || '', user: tg?.initDataUnsafe?.user || null },
-        trip: t,
-        loads: loads,
-        expenses: expenses,
-        client_token: `${uid||'u'}_${now}`
-      };
-
-      try{
-        const res = await fetch(WEBHOOK_URL, {
-          method:'POST',
-          headers:{ 'content-type':'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const body = await res.json().catch(()=> ({}));
-        if(!res.ok){ throw new Error(body?.error || 'Submit failed'); }
-
-        localStorage.setItem(lockKey, String(now));
-        showSubmitOk('Submitted! Thank you.');
-        try{ tg?.showPopup?.({message:'Submitted! Thank you.'}); }catch{}
-        // either close or go to menu
-        setTimeout(()=> { location.replace('index.html'); }, 600);
-      }catch(e){
-        showSubmitErr(e.message || 'Network error');
-        submitBtn.disabled = false; submitBtn.textContent='Submit';
-        document.body.querySelector('.wrap').classList.remove('disabled');
-      }
-    }
-
-    submitBtn.onclick = doSubmit;
-    document.getElementById('back3').onclick = () => showStep(3);
-  </script>
+  document.getElementById('backMenuBtn')?.addEventListener('click', backToMenu);
+})();
+</script>
 </body>
 </html>
 
