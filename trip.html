@@ -7,7 +7,6 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root{
-      /* Единые переменные как на index/register */
       --bg: var(--tg-theme-secondary-bg-color, #0f1220);
       --text: var(--tg-theme-text-color, #e6e6e6);
       --muted: var(--tg-theme-hint-color, #9aa3b2);
@@ -17,11 +16,10 @@
       --stroke: rgba(255,255,255,0.12);
       --shadow: 0 10px 30px rgba(0,0,0,0.25);
       --radius: 18px;
+      --err:#f43f5e;
 
-      /* Старые локальные переменные перекинули на новые */
       --primary: var(--accent);
       --primary-600: var(--accent);
-      --err:#f43f5e;
     }
 
     *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
@@ -37,7 +35,6 @@
         var(--bg);
     }
 
-    /* Верхняя панель с кнопкой Назад и заголовком */
     .topbar{
       position:sticky; top:0; z-index:10;
       display:flex; align-items:center; gap:12px;
@@ -55,7 +52,6 @@
 
     .wrap{ max-width:720px; margin:0 auto; padding:16px; }
 
-    /* Карточки/секции в едином стиле */
     .section{
       background: var(--card);
       border: 1px solid var(--stroke);
@@ -66,7 +62,7 @@
       margin-bottom: 14px;
     }
     .title{ font-weight:700; font-size:18px; margin:0 0 6px }
-    .hint{ color:var(--muted); margin:0 0 16px }
+    .hint{ color:var(--muted); margin:0 0 12px }
 
     .grid{ display:grid; gap:12px }
     .grid-2{ grid-template-columns:1fr 1fr }
@@ -109,7 +105,6 @@
     .err{ color:var(--err); margin:6px 2px 0 2px; font-size:14px }
     [hidden]{ display:none !important }
 
-    /* review pretty view (only Trip / Loads / Expenses) */
     .review-block{ margin-top:12px }
     .rv-title{ font-weight:700; margin:6px 0 8px }
     .kv{
@@ -127,11 +122,22 @@
       color: var(--text); font-size:14px;
     }
     .banner.error{ border-color: rgba(255,0,0,.35); color:#ff6b6b; }
+
+    /* небольшая анимация для привлечения внимания к блоку с ошибкой */
+    @keyframes shake {
+      0%{ transform: translateX(0) }
+      20%{ transform: translateX(-4px) }
+      40%{ transform: translateX(4px) }
+      60%{ transform: translateX(-3px) }
+      80%{ transform: translateX(3px) }
+      100%{ transform: translateX(0) }
+    }
+    .shake { animation: shake .35s ease; }
+    .outline-err { box-shadow: 0 0 0 2px rgba(244,63,94,.5) inset; }
   </style>
 </head>
 <body>
 
-  <!-- Top bar with Back -->
   <div class="topbar">
     <button id="backMenuBtn" class="top-btn" type="button">← Back to menu</button>
     <div class="top-title">Trip report</div>
@@ -143,36 +149,39 @@
     <div id="guardError" class="banner error" hidden></div>
 
     <!-- STEP 1: Trip -->
-    <section id="step_trip" class="section">
+    <section id="step_trip" class="section" aria-live="polite">
       <div class="title">Trip report</div>
       <p class="hint">Fill out trip, loads and expenses. Your Telegram ID will be captured automatically.</p>
 
+      <!-- Баннер ошибок шага -->
+      <div id="trip_banner" class="banner error" hidden></div>
+
       <div class="grid">
         <div class="card">
-          <label>Start location</label>
+          <label for="start_location">Start location</label>
           <input id="start_location" placeholder="City, ST">
         </div>
         <div class="grid grid-2">
           <div class="card">
-            <label>Start date</label>
+            <label for="start_date">Start date</label>
             <input id="start_date" type="date">
           </div>
           <div class="card">
-            <label>Start mileage</label>
+            <label for="start_mileage">Start mileage</label>
             <input id="start_mileage" inputmode="numeric" placeholder="e.g., 102345">
           </div>
         </div>
         <div class="card">
-          <label>Finish location</label>
+          <label for="finish_location">Finish location</label>
           <input id="finish_location" placeholder="City, ST">
         </div>
         <div class="grid grid-2">
           <div class="card">
-            <label>Finish date</label>
+            <label for="finish_date">Finish date</label>
             <input id="finish_date" type="date">
           </div>
           <div class="card">
-            <label>Finish mileage</label>
+            <label for="finish_mileage">Finish mileage</label>
             <input id="finish_mileage" inputmode="numeric" placeholder="e.g., 103210">
           </div>
         </div>
@@ -186,9 +195,12 @@
     </section>
 
     <!-- STEP 2: Loads -->
-    <section id="step_loads" class="section" hidden>
+    <section id="step_loads" class="section" aria-live="polite" hidden>
       <div class="title">Loads</div>
       <p class="hint">Add one or more loads. Partial/Tarp are quantities (can be 0 or empty).</p>
+
+      <!-- Баннер ошибок шага -->
+      <div id="loads_banner" class="banner error" hidden></div>
 
       <div id="loadChips" class="chips"></div>
       <div id="loadCard" class="card"></div>
@@ -207,9 +219,12 @@
     </section>
 
     <!-- STEP 3: Expenses -->
-    <section id="step_expenses" class="section" hidden>
+    <section id="step_expenses" class="section" aria-live="polite" hidden>
       <div class="title">Expenses</div>
       <p class="hint">Optional. Add fuel, parking, wash, etc.</p>
+
+      <!-- Баннер ошибок шага -->
+      <div id="expenses_banner" class="banner error" hidden></div>
 
       <div id="expList" class="grid"></div>
       <div class="row">
@@ -223,8 +238,12 @@
     </section>
 
     <!-- STEP 4: Review -->
-    <section id="step_review" class="section" hidden>
+    <section id="step_review" class="section" aria-live="polite" hidden>
       <div class="title">Review & submit</div>
+
+      <!-- Баннер ошибок шага -->
+      <div id="review_banner" class="banner error" hidden></div>
+
       <div id="reviewBox" class="review-block"></div>
 
       <div id="submit_err" class="err" hidden></div>
@@ -242,19 +261,16 @@
 const tg = window.Telegram?.WebApp;
 if (tg){ tg.ready(); tg.expand(); tg.MainButton.hide(); }
 
-/* ---------- API guard (как на index/register) ---------- */
+/* ---------- API guard ---------- */
 const API_BASE = 'https://eyeubidvqegcrseedlyz.supabase.co/functions/v1';
 const ME_URL   = `${API_BASE}/rapid-function`;
 const REG_URL  = `${API_BASE}/clever-action`;
 const KEY_ME   = 'me:v1';
 
 function getUserId(){ return tg?.initDataUnsafe?.user?.id ?? null; }
-function readCache(){
-  try{ return JSON.parse(sessionStorage.getItem(KEY_ME) || 'null'); }catch{ return null; }
-}
-function writeCache(obj){
-  try{ sessionStorage.setItem(KEY_ME, JSON.stringify(obj)); }catch{}
-}
+function readCache(){ try{ return JSON.parse(sessionStorage.getItem(KEY_ME) || 'null'); }catch{ return null; } }
+function writeCache(obj){ try{ sessionStorage.setItem(KEY_ME, JSON.stringify(obj)); }catch{} }
+
 async function fetchMe(){
   const res = await fetch(ME_URL, {
     method:'POST',
@@ -291,13 +307,39 @@ function showGuardError(msg){
 function backToMenu(){
   try { location.replace('index.html'); }
   catch(e){}
-  finally{
-    // fallback на закрытие, если открыт в отдельной вкладке
-    setTimeout(()=> tg?.close?.(), 150);
-  }
+  finally{ setTimeout(()=> tg?.close?.(), 150); }
 }
 
-/* ---------- Original trip.html logic (без изменений формата) ---------- */
+/* ---------- Helpers for UX errors ---------- */
+function setBanner(id, msg){
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!msg){ el.hidden = true; el.textContent=''; return; }
+  el.textContent = msg;
+  el.hidden = false;
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function shake(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('shake');
+  void el.offsetWidth; // restart animation
+  el.classList.add('shake');
+}
+
+function focusElem(id){
+  const el = document.getElementById(id);
+  if (el && typeof el.focus==='function') el.focus();
+}
+
+function outlineError(id, on=true){
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (on) el.classList.add('outline-err'); else el.classList.remove('outline-err');
+}
+
+/* ---------- Original state/logic (format unchanged) ---------- */
 const WEBHOOK_URL = 'https://venture666.app.n8n.cloud/webhook/a20cec7e-fc93-4a5c-b314-935c5009b235';
 
 const state = {
@@ -309,16 +351,41 @@ const state = {
 let inFlight = false;
 
 function goStep(step){
+  // Очистка баннеров текущего шага
+  if (state.step==='trip')    setBanner('trip_banner', null);
+  if (state.step==='loads')   setBanner('loads_banner', null);
+  if (state.step==='expenses')setBanner('expenses_banner', null);
+  if (state.step==='review')  setBanner('review_banner', null);
+
   if (step==='loads' && !validateTrip()) return;
+  if (step==='expenses'){
+    if (!validateLoads()){
+      // Подсказываем, что сделать
+      setBanner('loads_banner', 'Add at least one load and fill any of its fields (Date, Pickup, Delivery or Partial/Tarp).');
+      shake('loadCard');
+      return;
+    }
+  }
   if (step==='review'){
-    if (!validateTrip() || !validateLoads()) return;
+    if (!validateTrip()) return;
+    if (!validateLoads()){
+      setBanner('loads_banner', 'Add at least one load and fill any of its fields (Date, Pickup, Delivery or Partial/Tarp).');
+      state.step='loads';
+      document.getElementById('step_trip').hidden = true;
+      document.getElementById('step_loads').hidden = false;
+      document.getElementById('step_expenses').hidden = true;
+      document.getElementById('step_review').hidden = true;
+      shake('loadCard');
+      return;
+    }
     renderReview();
   }
+
   state.step = step;
-  document.getElementById('step_trip').hidden = step!=='trip';
-  document.getElementById('step_loads').hidden = step!=='loads';
+  document.getElementById('step_trip').hidden     = step!=='trip';
+  document.getElementById('step_loads').hidden    = step!=='loads';
   document.getElementById('step_expenses').hidden = step!=='expenses';
-  document.getElementById('step_review').hidden = step!=='review';
+  document.getElementById('step_review').hidden   = step!=='review';
 }
 
 function validateTrip(){
@@ -328,11 +395,36 @@ function validateTrip(){
   const finishMil = Number(val('finish_mileage')||'');
   const err = document.getElementById('trip_err');
 
-  if (!startLoc || !finishLoc){ err.textContent='Enter start and finish locations.'; err.hidden=false; return false; }
-  if (Number.isNaN(startMil) || Number.isNaN(finishMil)){ err.textContent='Mileage must be numbers.'; err.hidden=false; return false; }
-  if (finishMil < startMil){ err.textContent='Finish mileage must be ≥ start mileage.'; err.hidden=false; return false; }
-  err.hidden=true; return true;
+  // очистим подсветки
+  ['start_location','finish_location','start_mileage','finish_mileage'].forEach(id=> outlineError(id,false));
+
+  if (!startLoc || !finishLoc){
+    err.textContent='Enter start and finish locations.'; err.hidden=false;
+    setBanner('trip_banner', 'Please provide both Start and Finish locations.');
+    const focusId = !startLoc ? 'start_location' : 'finish_location';
+    outlineError(focusId,true); focusElem(focusId);
+    document.getElementById('step_trip').scrollIntoView({behavior:'smooth', block:'start'});
+    return false;
+  }
+  if (Number.isNaN(startMil) || Number.isNaN(finishMil)){
+    err.textContent='Mileage must be numbers.'; err.hidden=false;
+    setBanner('trip_banner', 'Mileage must be numeric values.');
+    const focusId = Number.isNaN(startMil) ? 'start_mileage' : 'finish_mileage';
+    outlineError(focusId,true); focusElem(focusId);
+    document.getElementById('step_trip').scrollIntoView({behavior:'smooth', block:'start'});
+    return false;
+  }
+  if (finishMil < startMil){
+    err.textContent='Finish mileage must be ≥ start mileage.'; err.hidden=false;
+    setBanner('trip_banner', 'Finish mileage must be greater than or equal to Start mileage.');
+    outlineError('finish_mileage',true); focusElem('finish_mileage');
+    document.getElementById('step_trip').scrollIntoView({behavior:'smooth', block:'start'});
+    return false;
+  }
+  err.hidden=true; setBanner('trip_banner', null);
+  return true;
 }
+
 function val(id){ return (document.getElementById(id)?.value || '').trim(); }
 
 function addLoad(){
@@ -366,9 +458,22 @@ function isLoadFilled(L){
 function validateLoads(){
   saveCurrentLoad();
   const err=document.getElementById('loads_err');
-  if (state.loads.length===0){ err.textContent='Add at least 1 load.'; err.hidden=false; return false; }
-  if (!state.loads.some(isLoadFilled)){ err.textContent='Please fill at least one field in any load (Date, Pickup, Delivery or Number for Partial/Tarp).'; err.hidden=false; return false; }
-  err.hidden=true; return true;
+  // Снимем подстветку
+  if (state.loads.length===0){
+    err.textContent='Add at least 1 load.'; err.hidden=false;
+    setBanner('loads_banner', 'No loads added. Click “+ Add load”, then fill at least one field.');
+    document.getElementById('loadCard').scrollIntoView({behavior:'smooth', block:'center'});
+    return false;
+  }
+  if (!state.loads.some(isLoadFilled)){
+    err.textContent='Please fill at least one field in any load.'; err.hidden=false;
+    setBanner('loads_banner', 'Fill any field of a load: Date, Pickup, Delivery, Partial or Tarp.');
+    document.getElementById('loadCard').scrollIntoView({behavior:'smooth', block:'center'});
+    shake('loadCard');
+    return false;
+  }
+  err.hidden=true; setBanner('loads_banner', null);
+  return true;
 }
 function renderLoads(){
   if (state.loads.length===0) state.loads=[{date:'',pickup:'',delivery:'',partial:'',tarp:''}];
@@ -452,7 +557,6 @@ function renderReview(){
   const payload = buildPayload(true);
   const rv = [];
 
-  // Trip
   rv.push(`<div class="rv-title">Trip</div>`);
   rv.push(`<div class="kv">
     ${row('Start location', payload.trip.start_location)}
@@ -463,7 +567,6 @@ function renderReview(){
     ${row('Finish mileage', payload.trip.finish_mileage)}
   </div>`);
 
-  // Loads
   rv.push(`<div class="rv-title" style="margin-top:10px">Loads${payload.loads?.length?` (${payload.loads.length})`:''}</div>`);
   if (payload.loads && payload.loads.length){
     payload.loads.forEach((L,idx)=>{
@@ -482,7 +585,6 @@ function renderReview(){
     rv.push(`<div class="kv"><div class="kv-row"><div class="kv-k">—</div><div>No loads</div></div></div>`);
   }
 
-  // Expenses
   const exps = (payload.expenses||[]).filter(e=> (e.name&&e.name.trim()) || (e.price!=='' && !Number.isNaN(Number(e.price))));
   rv.push(`<div class="rv-title" style="margin-top:10px">Expenses${exps.length?` (${exps.length})`:''}</div>`);
   if (exps.length){
@@ -502,10 +604,9 @@ function renderReview(){
   function row(k,v){ return `<div class="kv-row"><div class="kv-k">${esc(k)}</div><div>${esc(String(v||''))}</div></div>`; }
 }
 
-// Payload
-function buildPayload(forPreview=false){
+function buildPayload(){
   saveCurrentLoad();
-  const payload = {
+  return {
     trip:{
       start_location: val('start_location'),
       start_date: document.getElementById('start_date')?.value || '',
@@ -528,7 +629,6 @@ function buildPayload(forPreview=false){
       user: tg?.initDataUnsafe?.user || null
     }
   };
-  return payload;
 }
 
 let lockBtn=false;
@@ -539,20 +639,18 @@ function lockSubmit(on){
 }
 function showSubmitError(msg){ const e=document.getElementById('submit_err'); e.textContent=msg; e.hidden=false; }
 function clearSubmitError(){ document.getElementById('submit_err').hidden=true; }
-
-// utils
 function esc(s){return (s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
 
-// Submit with anti-dup & x-telegram-init-data header
 async function submitTrip(){
   if (inFlight) return;
-  if (!validateTrip() || !validateLoads()) return;
+  if (!validateTrip()){ setBanner('review_banner','Fix Trip section first.'); goStep('trip'); return; }
+  if (!validateLoads()){ setBanner('review_banner','Add at least one valid Load.'); goStep('loads'); return; }
 
   const userId = tg?.initDataUnsafe?.user?.id || 'anon';
   const lk = `trip_submit_lock_${userId}`, last = Number(localStorage.getItem(lk)||'0'), now = Date.now();
   if (now-last<120000){ showSubmitError('You have recently submitted a trip. Please try again in a minute.'); return; }
 
-  const payload = buildPayload(false);
+  const payload = buildPayload();
   clearSubmitError(); lockSubmit(true);
   try{
     const res = await fetch(WEBHOOK_URL,{
@@ -574,7 +672,7 @@ async function submitTrip(){
 (async ()=>{
   try{
     const me = await ensureRegistered();
-    if(!me) return; // был редирект на register.html
+    if(!me) return;
   }catch(e){
     showGuardError('Failed to verify registration. Pull to refresh or try again.');
   }
