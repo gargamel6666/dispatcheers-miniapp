@@ -5,6 +5,7 @@
   <title>Driver • Register</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark light" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root{
       --bg: var(--tg-theme-secondary-bg-color, #0f1220);
@@ -14,77 +15,126 @@
       --accentText: var(--tg-theme-button-text-color, #fff);
       --card: rgba(255,255,255,0.06);
       --stroke: rgba(255,255,255,0.12);
-      --radius: 18px;
       --shadow: 0 10px 30px rgba(0,0,0,0.25);
+      --radius: 18px;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:0;background:radial-gradient(1200px 800px at 20% -10%, rgba(78,140,255,0.15), transparent 60%), radial-gradient(1000px 700px at 120% 110%, rgba(78,140,255,0.12), transparent 60%), var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial}
-    .wrap{min-height:100svh; padding:calc(12px + var(--safe-top)) 16px calc(20px + var(--safe-bottom)); display:flex; flex-direction:column; gap:16px}
-    .card{background:var(--card); border:1px solid var(--stroke); border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter: blur(10px); padding:16px}
-    .head{display:flex; gap:12px; align-items:center}
-    .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7aa5ff); box-shadow:0 6px 16px rgba(0,0,0,.25)}
-    h1{font-size:18px;margin:0 0 4px 0}
-    .muted{color:var(--muted); font-size:13px}
-    label{display:block; font-weight:600; margin:8px 0 6px}
-    input[type="text"]{width:100%; height:52px; border-radius:14px; border:1px solid var(--stroke); background:rgba(255,255,255,0.04); color:var(--text); padding:0 14px; outline:none}
-    .row{display:flex; gap:10px}
-    .btn{flex:1; padding:14px 16px; text-align:center; border-radius:14px; border:0; background:var(--accent); color:var(--accentText); font-weight:700; cursor:pointer}
-    .btn.secondary{background:transparent; color:var(--text); border:1px solid var(--stroke)}
-    .btn[disabled]{opacity:.6; pointer-events:none}
-    .error{color:#ff6b6b; font-size:13px; margin-top:8px}
-    .ok{color:#2ecc71; font-size:13px; margin-top:8px}
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
+        radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
+        var(--bg);
+      padding: calc(12px + var(--safe-top)) 16px calc(20px + var(--safe-bottom));
+      display:flex; align-items:center; justify-content:center;
+    }
+    .card{
+      width:100%;
+      max-width:520px;
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding:20px;
+    }
+    .head{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .logo{
+      width:38px; height:38px; border-radius:12px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+      flex:0 0 38px;
+    }
+    h1{ font-size:18px; line-height:1.25; margin:0; }
+    .sub{ color:var(--muted); font-size:13px; margin-top:4px; }
+
+    label{ display:block; font-weight:700; font-size:14px; margin:10px 0 6px; }
+    .input{
+      width:100%; height:52px; border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,0.04);
+      color:var(--text);
+      padding:0 14px; outline:none;
+    }
+
+    .row{ display:flex; gap:10px; margin-top:12px; }
+    .btn{
+      flex:1; padding:14px 16px; border-radius:14px; border:0;
+      background:var(--accent); color:var(--accentText); font-weight:800;
+      cursor:pointer; transition: transform .12s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); }
+    .btn.secondary{
+      background:transparent; color:var(--text);
+      border:1px solid var(--stroke); font-weight:700;
+    }
+    .btn[disabled]{ opacity:.6; pointer-events:none; }
+
+    .msg{ font-size:13px; margin-top:8px; display:none; }
+    .msg.error{ color:#ff6b6b; }
+    .msg.ok{ color:#2ecc71; }
+
+    .hint{ color:var(--muted); font-size:13px; margin-top:8px; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="head">
-        <div class="logo"></div>
-        <div>
-          <h1>Quick Registration</h1>
-          <div class="muted">We’ll link your Telegram account to the driver profile.</div>
-        </div>
+  <main class="card">
+    <div class="head">
+      <div class="logo"></div>
+      <div>
+        <h1>Quick Registration</h1>
+        <div class="sub">We’ll link your Telegram to your driver profile.</div>
       </div>
-      <label for="fullName">Full name</label>
-      <input id="fullName" type="text" inputmode="text" autocomplete="off" placeholder="e.g., Jake Lohov" />
-      <div id="msg" class="error" style="display:none"></div>
     </div>
 
-    <div class="card">
-      <div class="row">
-        <button id="backBtn" class="btn secondary">Back</button>
-        <button id="goBtn" class="btn">Continue</button>
-      </div>
-      <div id="hint" class="muted" style="margin-top:8px"></div>
-    </div>
-  </div>
+    <label for="fullName">Full name</label>
+    <input id="fullName" class="input" type="text" inputmode="text" autocomplete="off" placeholder="e.g., John Smith" />
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <div id="msg" class="msg"></div>
+
+    <div class="row">
+      <button id="backBtn" class="btn secondary" type="button">Back</button>
+      <button id="goBtn" class="btn" type="button">Continue</button>
+    </div>
+
+    <div id="hint" class="hint"></div>
+  </main>
+
   <script>
+    // --- Telegram init
     const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand?.();
 
+    // --- API endpoints (unchanged)
     const API_BASE = 'https://eyeubidvqegcrseedlyz.supabase.co/functions/v1';
     const ME_URL   = `${API_BASE}/rapid-function`;
     const REG_URL  = `${API_BASE}/clever-action`;
 
+    // --- Keys / locks (unchanged)
     const KEY_ME = 'me:v1';
     const LOCK_PREFIX = 'register_lock_';
 
     function getUserId(){ return tg?.initDataUnsafe?.user?.id ?? null; }
     function writeCache(obj){ try{ sessionStorage.setItem(KEY_ME, JSON.stringify(obj)); }catch{} }
 
-    const msg = document.getElementById('msg');
-    function showError(t){ msg.textContent = t; msg.style.display='block'; msg.className='error'; }
-    function showOk(t){ msg.textContent = t; msg.style.display='block'; msg.className='ok'; }
+    const msgEl = document.getElementById('msg');
+    function showError(t){ msgEl.textContent=t; msgEl.className='msg error'; msgEl.style.display='block'; }
+    function showOk(t){ msgEl.textContent=t; msgEl.className='msg ok'; msgEl.style.display='block'; }
 
+    // Back to menu
     document.getElementById('backBtn').onclick = () => location.replace('index.html');
 
     let inFlight = false;
 
     async function doRegister(){
       if(inFlight) return;
+
       const fullName = (document.getElementById('fullName').value || '').trim();
       if(!fullName){ showError('Please enter your full name.'); return; }
 
@@ -111,8 +161,12 @@
             'content-type':'application/json',
             'x-telegram-init-data': tg?.initData || ''
           },
-          body: JSON.stringify({ full_name: fullName, _tg_meta:{initData: tg?.initData||'', user: tg?.initDataUnsafe?.user||null} })
+          body: JSON.stringify({
+            full_name: fullName,
+            _tg_meta:{ initData: tg?.initData||'', user: tg?.initDataUnsafe?.user||null }
+          })
         });
+
         const body = await res.json().catch(()=>({}));
         if(!res.ok){ throw new Error(body?.error || 'Network error'); }
 
@@ -121,12 +175,17 @@
         location.replace('index.html');
       }catch(e){
         showError(String(e.message||e));
-        btn.disabled=false; btn.textContent='Continue';
-        inFlight=false;
+        btn.disabled = false; btn.textContent = 'Continue';
+        inFlight = false;
       }
     }
 
     document.getElementById('goBtn').onclick = doRegister;
+
+    // Submit on Enter
+    document.getElementById('fullName').addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); doRegister(); }
+    });
   </script>
 </body>
 </html>
