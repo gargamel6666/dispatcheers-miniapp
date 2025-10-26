@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Driver • Upload BOL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="dark light" />
+  <title>Upload BOL</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root{
       --bg: var(--tg-theme-secondary-bg-color, #0f1220);
@@ -14,66 +14,155 @@
       --accentText: var(--tg-theme-button-text-color, #fff);
       --card: rgba(255,255,255,0.06);
       --stroke: rgba(255,255,255,0.12);
-      --radius: 18px;
       --shadow: 0 10px 30px rgba(0,0,0,0.25);
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --radius: 18px;
+      --err:#f43f5e;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:0;background:radial-gradient(1200px 800px at 20% -10%, rgba(78,140,255,0.15), transparent 60%), radial-gradient(1000px 700px at 120% 110%, rgba(78,140,255,0.12), transparent 60%), var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial}
-    .wrap{min-height:100svh; padding:calc(12px + var(--safe-top)) 16px calc(20px + var(--safe-bottom)); display:flex; flex-direction:column; gap:16px}
-    .card{background:var(--card); border:1px solid var(--stroke); border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter: blur(10px); padding:16px}
-    .head{display:flex; gap:12px; align-items:center}
-    .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7aa5ff); box-shadow:0 6px 16px rgba(0,0,0,.25)}
-    h1{font-size:18px;margin:0 0 4px 0}
-    .muted{color:var(--muted); font-size:13px}
-    input[type="file"]{width:100%; border:1px solid var(--stroke); background:rgba(255,255,255,0.04); border-radius:14px; padding:12px}
-    .row{display:flex; gap:10px}
-    .btn{flex:1; padding:14px 16px; text-align:center; border-radius:14px; border:0; background:var(--accent); color:var(--accentText); font-weight:700; cursor:pointer}
-    .btn.secondary{background:transparent; color:var(--text); border:1px solid var(--stroke)}
-    .btn[disabled]{opacity:.6; pointer-events:none}
-    .error{color:#ff6b6b; font-size:13px; margin-top:8px}
-    .ok{color:#2ecc71; font-size:13px; margin-top:8px}
-    .hidden{display:none}
-    .disabled{opacity:0.6; pointer-events:none}
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
+        radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
+        var(--bg);
+      display: grid;
+      padding: 16px;
+    }
+
+    /* Topbar */
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      display:flex; align-items:center; gap:12px;
+      padding:14px 16px;
+      background: linear-gradient(180deg, rgba(15,18,32,.9), rgba(15,18,32,.65) 70%, rgba(15,18,32,0));
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--stroke);
+    }
+    .top-btn{
+      border:1px solid var(--stroke); background:transparent; color:var(--text);
+      padding:10px 12px; border-radius:14px; font-weight:700; cursor:pointer;
+    }
+    .top-title{ font-weight:800; font-size:16px; }
+
+    /* Card */
+    .wrap { width:100%; max-width: 520px; margin: 0 auto; }
+    .card {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 20px;
+      margin-top: 14px;
+    }
+    .head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .logo {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      display: grid; place-items: center; color: var(--accentText); font-weight: 800;
+      box-shadow: 0 6px 16px rgba(0,0,0,.25); user-select: none; flex: 0 0 38px;
+    }
+    h1 { font-size: 18px; line-height: 1.25; margin: 0; }
+    .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    .banner{
+      margin:10px 0; padding:10px 12px; border-radius:14px;
+      border:1px solid var(--stroke); background: rgba(255,255,255,0.04);
+      color: var(--text); font-size:14px; display:none;
+    }
+    .banner.error{ border-color: rgba(255,0,0,.35); color:#ff6b6b; }
+    .banner.ok{ border-color: rgba(46, 204, 113, .35); color:#2ecc71; }
+
+    label { display:block; font-weight:700; font-size:14px; margin:10px 0 6px; }
+    .input{
+      width:100%; border-radius:14px; border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.04); color:var(--text);
+      padding:12px; outline:none;
+    }
+    .hint { color:var(--muted); font-size:13px; margin-top:8px; }
+
+    .row{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+    .btn{
+      flex:1; padding:14px 16px; border-radius:14px; border:0;
+      background:var(--accent); color:var(--accentText); font-weight:800;
+      cursor:pointer; transition: transform .12s ease;
+    }
+    .btn:active{ transform: translateY(1px) }
+    .btn.secondary{
+      background:transparent; color:var(--text);
+      border:1px solid var(--stroke); font-weight:700;
+    }
+    .btn[disabled]{ opacity:.6; pointer-events:none; }
+
+    .disabled { pointer-events:none; opacity:.6; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
+    <div class="topbar">
+      <button id="backMenuBtn" class="top-btn" type="button">← Back to menu</button>
+      <div class="top-title">Upload BOL</div>
+    </div>
+
+    <main class="card" id="container">
       <div class="head">
-        <div class="logo"></div>
+        <div class="logo">⋯</div>
         <div>
           <h1>Upload BOL</h1>
-          <div class="muted">Attach your BOL file(s). We’ll capture your Telegram user ID automatically.</div>
+          <div class="sub">Attach your BOL file(s). We’ll capture your Telegram user ID automatically.</div>
         </div>
       </div>
-      <input id="fileInput" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple />
-      <div id="alert" class="error hidden"></div>
-      <div id="ok" class="ok hidden"></div>
-    </div>
 
-    <div class="card">
-      <div class="row">
-        <button id="backBtn" class="btn secondary">Back</button>
-        <button id="sendBtn" class="btn">Submit</button>
-      </div>
-    </div>
+      <!-- Guard / errors -->
+      <div id="guardError" class="banner error"></div>
+      <div id="alert" class="banner error"></div>
+      <div id="ok" class="banner ok"></div>
+
+      <form id="bolForm" autocomplete="off" enctype="multipart/form-data" novalidate>
+        <label for="bol">BOL file(s)</label>
+        <!-- сохраняем имя поля как в исходном upload.html -->
+        <input id="bol" name="bol_file" class="input" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple required />
+        <div class="hint">PDF or images are fine. Multiple pages → select multiple files.</div>
+
+        <div class="row">
+          <button class="btn" type="submit" id="submit">Submit</button>
+          <button class="btn secondary" type="button" id="back">Back to menu</button>
+        </div>
+      </form>
+    </main>
   </div>
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
+    // Telegram init
     const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand?.();
 
+    // --- Keep webhook & field name exactly as in your upload.html ---
+    const WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/upload-bol";
+
+    // Unified endpoints/guard like on index/register/trip
     const API_BASE = 'https://eyeubidvqegcrseedlyz.supabase.co/functions/v1';
     const ME_URL   = `${API_BASE}/rapid-function`;
-    const REG_URL  = `${API_BASE}/clever-action`;
+    const KEY_ME   = 'me:v1';
 
-    const WEBHOOK_URL = 'https://venture666.app.n8n.cloud/webhook/upload-bol';
-    const KEY_ME = 'me:v1';
+    const form = document.getElementById('bolForm');
+    const submitBtn = document.getElementById('submit');
+    const backBtn = document.getElementById('back');
+    const backMenuBtn = document.getElementById('backMenuBtn');
+    const fileInput = document.getElementById('bol');
+    const alertBox = document.getElementById('alert');
+    const okBox = document.getElementById('ok');
+    const guardBox = document.getElementById('guardError');
+    const container = document.getElementById('container');
+
+    let inFlight = false;
 
     function getUserId(){ return tg?.initDataUnsafe?.user?.id ?? null; }
-    function readCache(){ try{ return JSON.parse(sessionStorage.getItem(KEY_ME)||'null'); }catch{ return null; } }
+    function readCache(){ try{ return JSON.parse(sessionStorage.getItem(KEY_ME) || 'null'); }catch{ return null; } }
     function writeCache(obj){ try{ sessionStorage.setItem(KEY_ME, JSON.stringify(obj)); }catch{} }
 
     async function fetchMe(){
@@ -88,65 +177,129 @@
       if(!res.ok) throw new Error('Network error');
       return await res.json();
     }
-
     async function ensureRegistered(){
       const uid = getUserId();
       const cached = readCache();
       if (cached && cached.userId === uid && cached.registered) return cached;
+
       const data = await fetchMe();
       const payload = { userId: uid, registered: !!data?.registered, profile: data?.profile || null };
       writeCache(payload);
-      if (!payload.registered){ location.replace('register.html'); return null; }
+      if (!payload.registered) {
+        location.replace('register.html');
+        return null;
+      }
       return payload;
     }
 
-    (async () => {
-      try{ await ensureRegistered(); }catch{ /* soft fail; guard below on send */ }
-    })();
+    function showError(msg) {
+      if (!msg) { alertBox.style.display = 'none'; alertBox.textContent = ''; return; }
+      okBox.style.display = 'none';
+      alertBox.textContent = msg;
+      alertBox.style.display = 'block';
+      alertBox.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+    function showOk(msg){
+      if (!msg) { okBox.style.display = 'none'; okBox.textContent = ''; return; }
+      alertBox.style.display = 'none';
+      okBox.textContent = msg;
+      okBox.style.display = 'block';
+      okBox.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+    function showGuard(msg){
+      if (!msg){ guardBox.style.display='none'; guardBox.textContent=''; return; }
+      guardBox.textContent = msg;
+      guardBox.style.display = 'block';
+    }
 
-    const alertBox = document.getElementById('alert');
-    const okBox = document.getElementById('ok');
-    const fileInput = document.getElementById('fileInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const backBtn = document.getElementById('backBtn');
-
-    backBtn.onclick = () => location.replace('index.html');
-
-    function showErr(t){ alertBox.textContent=t; alertBox.classList.remove('hidden'); okBox.classList.add('hidden'); }
-    function showOk(t){ okBox.textContent=t; okBox.classList.remove('hidden'); alertBox.classList.add('hidden'); }
-
-    async function submitFiles(){
-      const me = await ensureRegistered(); if(!me) return;
-      const files = fileInput.files;
-      if(!files || files.length===0){ showErr('Please select at least one file.'); return; }
-
-      const container = document.body.querySelector('.wrap');
-      container.classList.add('disabled');
-      sendBtn.disabled = true; sendBtn.textContent='Uploading…';
-
-      try{
-        const fd = new FormData();
-        for (const f of files) fd.append('files', f, f.name);
-        const total = [...files].reduce((s,f)=>s+f.size,0);
-        fd.append('_tg_meta', JSON.stringify({ initData: tg?.initData || '', user: tg?.initDataUnsafe?.user || null }));
-        fd.append('_debug_file_count', String(files.length));
-        fd.append('_debug_total_bytes', String(total));
-
-        const res = await fetch(WEBHOOK_URL, { method:'POST', body: fd });
-        if(!res.ok) throw new Error('Upload failed');
-
-        showOk('Thanks! Your BOL has been submitted.');
-        document.querySelector('.row').innerHTML = `<button class="btn secondary" id="menuBtn">Back to menu</button>`;
-        document.getElementById('menuBtn').onclick = () => location.replace('index.html');
-      }catch(e){
-        showErr(e.message || 'Network error');
+    function lockForm(lock) {
+      if (lock) {
+        container.classList.add('disabled');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Uploading…';
+      } else {
         container.classList.remove('disabled');
-        sendBtn.disabled = false; sendBtn.textContent='Submit';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
       }
     }
 
-    sendBtn.onclick = submitFiles;
+    function backToMenu(){
+      try { location.replace('index.html'); }
+      catch(e){}
+      finally { setTimeout(()=> tg?.close?.(), 150); }
+    }
+
+    backBtn.addEventListener('click', backToMenu);
+    backMenuBtn.addEventListener('click', backToMenu);
+
+    // Anti double-tap
+    submitBtn.addEventListener('click', (e) => {
+      if (inFlight) { e.preventDefault(); e.stopPropagation(); }
+    }, { capture: true });
+
+    // Guard on load
+    (async () => {
+      try{
+        const me = await ensureRegistered();
+        if(!me) return; // redirected
+      }catch(e){
+        showGuard('Failed to verify registration. Pull to refresh or try again.');
+      }
+    })();
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (inFlight) return;
+
+      // 1) At least one file
+      const files = fileInput.files;
+      if (!files || files.length === 0) {
+        showError('Please select at least one file.');
+        fileInput.focus();
+        return;
+      }
+
+      showError(null); showOk(null);
+      inFlight = true;
+
+      // 2) Build FormData BEFORE locking UI (to keep File objects)
+      const meta = {
+        initData: tg?.initData || "",
+        user: tg?.initDataUnsafe?.user || null
+      };
+      const fd = new FormData();
+      // keep field name EXACTLY as in your upload.html
+      for (const f of files) fd.append('bol_file', f, f.name);
+      fd.append('_tg_meta', JSON.stringify(meta));
+
+      // 3) Lock UI and send
+      lockForm(true);
+      try {
+        const res = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          body: fd
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        // 4) Success UI
+        showOk('Thanks! Your BOL has been uploaded.');
+        form.remove();
+
+        const done = document.createElement('div');
+        done.innerHTML = `
+          <div class="row">
+            <button class="btn" id="back2" type="button" style="margin-top:8px;">Back to menu</button>
+          </div>
+        `;
+        container.appendChild(done);
+        document.getElementById('back2')?.addEventListener('click', backToMenu);
+      } catch (err) {
+        showError('Error. Please try again.');
+        inFlight = false;
+        lockForm(false);
+      }
+    }, { passive: false });
   </script>
 </body>
 </html>
-
