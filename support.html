@@ -220,79 +220,92 @@ Started today around 2 PM."
   </div>
 
   <script>
-    // Telegram WebApp context
-    const tg = window.Telegram && window.Telegram.WebApp
-      ? window.Telegram.WebApp
-      : null;
+  // Telegram WebApp context
+  const tg = window.Telegram && window.Telegram.WebApp
+    ? window.Telegram.WebApp
+    : null;
 
-    if (tg && tg.expand) {
-      tg.expand();
+  if (tg && tg.expand) {
+    tg.expand();
+  }
+
+  // Extract Telegram user info (neutral, role-agnostic)
+  const tgUser = tg?.initDataUnsafe?.user || {};
+  const telegramUserId = tgUser.id || null;
+  const telegramFirst  = tgUser.first_name || '';
+  const telegramLast   = tgUser.last_name || '';
+  const telegramName = [telegramFirst, telegramLast]
+    .filter(Boolean)
+    .join(' ')
+    .trim() || 'User';
+
+  // Fill header with simple user info
+  const userInfoEl = document.getElementById('userInfo');
+  userInfoEl.textContent = telegramUserId
+    ? `${telegramName}\nID: ${telegramUserId}`
+    : telegramName;
+
+  // Elements
+  const problemField = document.getElementById('problemField');
+  const sendBtn      = document.getElementById('sendBtn');
+  const statusMsg    = document.getElementById('statusMsg');
+
+  async function sendSupportTicket() {
+    const message = problemField.value.trim();
+
+    if (!message) {
+      statusMsg.style.color = "#f87171"; // red-400
+      statusMsg.textContent = "Please describe the problem.";
+      return;
     }
 
-    // Extract Telegram user info (no role logic here)
-    const tgUser = tg?.initDataUnsafe?.user || {};
-    const telegramUserId = tgUser.id || null;
-    const telegramFirst  = tgUser.first_name || '';
-    const telegramLast   = tgUser.last_name || '';
-    const telegramName = [telegramFirst, telegramLast]
-      .filter(Boolean)
-      .join(' ')
-      .trim() || 'User';
+    // lock UI to prevent spam
+    sendBtn.disabled = true;
+    problemField.disabled = true;
+    statusMsg.style.color = "#94a3b8"; // slate-400
+    statusMsg.textContent = "Sending...";
 
-    // Fill UI with user summary (neutral wording)
-    const userInfoEl = document.getElementById('userInfo');
-    userInfoEl.textContent = telegramUserId
-      ? `${telegramName}\nID: ${telegramUserId}`
-      : telegramName;
+    try {
+      // IMPORTANT: replace this with your real webhook URL
+      const resp = await fetch("https://SUPPORT_WEBHOOK_URL", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          telegram_user_id: telegramUserId,
+          telegram_name: telegramName,
+          message,
+          ts_client: new Date().toISOString()
+        })
+      });
 
-    // Elements
-    const problemField = document.getElementById('problemField');
-    const sendBtn      = document.getElementById('sendBtn');
-    const statusMsg    = document.getElementById('statusMsg');
-
-    async function sendSupportTicket() {
-      const message = problemField.value.trim();
-
-      if (!message) {
-        statusMsg.textContent = "Please describe the problem.";
-        return;
+      if (!resp.ok) {
+        throw new Error("Request failed");
       }
 
-      // lock UI to prevent spam
-      sendBtn.disabled = true;
-      problemField.disabled = true;
-      statusMsg.textContent = "Sending...";
+      // success visual
+      statusMsg.style.color = "#4ade80"; // green-400
+      statusMsg.textContent = "✅ Sent. We'll review shortly.";
 
-      try {
-        // TODO: replace SUPPORT_WEBHOOK_URL with your backend endpoint
-        // e.g. https://your-n8n-host/webhook/support-ticket
-        const resp = await fetch("https://venture666.app.n8n.cloud/webhook/b981b421-cce9-450f-8006-13aa7916b416", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            telegram_user_id: telegramUserId,
-            telegram_name: telegramName,
-            message,
-            ts_client: new Date().toISOString()
-          })
-        });
-
-        if (!resp.ok) {
-          throw new Error("Request failed");
+      // small delay then close mini app
+      setTimeout(() => {
+        if (tg && tg.close) {
+          tg.close(); // this closes the WebApp and returns user to chat
         }
+      }, 1500);
 
-        statusMsg.textContent = "Sent.";
-      } catch (err) {
-        // unlock so they can retry
-        sendBtn.disabled = false;
-        problemField.disabled = false;
-        statusMsg.textContent = "Error sending. Try again.";
-      }
+    } catch (err) {
+      // unlock so they can retry
+      sendBtn.disabled = false;
+      problemField.disabled = false;
+
+      statusMsg.style.color = "#f87171"; // red-400
+      statusMsg.textContent = "Error sending. Try again.";
     }
+  }
 
-    sendBtn.addEventListener('click', sendSupportTicket);
-  </script>
+  sendBtn.addEventListener('click', sendSupportTicket);
+</script>
 </body>
 </html>
