@@ -7,172 +7,173 @@
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   />
   <title>Support</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
+    /* Adopted Telegram/App Variables for Consistency with index.html */
     :root {
-      --bg-main: #0f172a;
-      --card-bg: rgba(30, 41, 59, .8);
-      --card-border: rgba(255,255,255,.07);
-      --text-primary: #fff;
-      --text-dim: #94a3b8;
-      --text-mid: #cbd5e1;
-      --stroke-focus: #38bdf8;
-      --button-bg: #2563eb;
-      --button-bg-disabled: #475569;
-      --button-text-disabled: #9ca3af;
-      --radius-xl: 20px;
-      --radius-lg: 14px;
-      --radius-md: 12px;
-      --padding-page: 16px;
-      --padding-card: 16px;
-      --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Inter",
-        Roboto, "Helvetica Neue", Arial, sans-serif;
+      --bg: var(--tg-theme-secondary-bg-color, #0f1220);
+      --text: var(--tg-theme-text-color, #e6e6e6);
+      --muted: var(--tg-theme-hint-color, #9aa3b2);
+      --accent: var(--tg-theme-button-color, #4e8cff);
+      --accentText: var(--tg-theme-button-text-color, #fff);
+      --card: rgba(255,255,255,0.06);
+      --stroke: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.25);
+      --radius: 18px; /* For main card */
+      --radius-sm: 14px; /* For button/textarea */
+      --stroke-focus: var(--accent);
     }
 
     * {
       box-sizing: border-box;
       -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
     }
 
+    /* Adopted Body Styling from index.html/register.html */
     body {
       margin: 0;
-      padding: var(--padding-page);
-      background-color: var(--bg-main);
-      color: var(--text-primary);
-      font-family: var(--font-stack);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      /* Use the same gradient background for stylish look */
+      background:
+        radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
+        radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
+        var(--bg);
       display: flex;
       flex-direction: column;
+      align-items: center;
+      padding: 16px;
       min-height: 100vh;
-      position: relative;
     }
 
     .wrapper {
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      z-index: 1;
-      position: relative;
+      gap: 12px;
     }
 
-    .headerCard {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius-xl);
-      padding: var(--padding-card);
+    /* Unified Card Style */
+    .card {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
     }
+
+    /* --- Header Card --- */
+    .headerCard { /* Inherits .card styles */ }
 
     .titleRow {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      flex-wrap: wrap;
       row-gap: 8px;
     }
 
     .pageTitle {
       font-size: 18px;
-      font-weight: 600;
-      color: var(--text-primary);
+      font-weight: 700;
+      color: var(--text);
       line-height: 1.3;
     }
 
-    .userInfo {
-      text-align: right;
-      font-size: 13px;
-      line-height: 1.4;
-      color: var(--text-dim);
-      white-space: pre-line;
-    }
+    /* UserInfo style removed as element is gone */
 
     .hint {
       font-size: 13px;
       line-height: 1.4;
-      color: var(--text-dim);
+      color: var(--muted);
+      margin-top: 6px;
     }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius-xl);
-      padding: var(--padding-card);
-      display: flex;
-      flex-direction: column;
-    }
+    /* --- Main Card --- */
 
     .fieldGroup {
       display: flex;
       flex-direction: column;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     .fieldLabel {
       font-size: 14px;
-      font-weight: 500;
-      color: var(--text-mid);
-      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
     }
 
     textarea {
       width: 100%;
-      min-height: 140px;
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(15,23,42,0.6);
-      color: var(--text-primary);
+      min-height: 160px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
       font-size: 15px;
-      line-height: 1.4;
+      line-height: 1.5;
       padding: 12px;
       outline: none;
-      resize: none;
+      resize: vertical;
     }
 
     textarea:focus {
       border-color: var(--stroke-focus);
-      box-shadow: 0 0 0 2px rgba(56,189,248,.3);
+      box-shadow: 0 0 0 2px rgba(78,140,255,.3);
     }
 
     .buttonPrimary {
       appearance: none;
       width: 100%;
       border: 0;
-      border-radius: var(--radius-md);
-      background: var(--button-bg);
-      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      color: var(--accentText);
       font-size: 16px;
-      font-weight: 600;
+      font-weight: 700;
       line-height: 1.2;
       padding: 14px 16px;
       text-align: center;
+      cursor: pointer;
+      transition: transform .12s ease;
     }
+    .buttonPrimary:hover { transform: translateY(-1px); }
+    .buttonPrimary:active { transform: translateY(0); }
 
     .buttonPrimary[disabled] {
-      background: var(--button-bg-disabled);
-      color: var(--button-text-disabled);
+      background: var(--tg-theme-button-color, #4e8cff);
+      opacity: 0.6;
+      color: var(--accentText);
+      pointer-events: none;
+      transform: none;
     }
 
     .statusMsg {
-      min-height: 1.2em;
+      min-height: 20px;
       text-align: center;
       font-size: 14px;
       line-height: 1.4;
-      color: var(--text-dim);
+      color: var(--muted);
       margin-top: 12px;
       word-break: break-word;
-      min-height: 20px;
     }
+    .statusMsg.ok { color: #4ade80; } /* Green */
+    .statusMsg.error { color: #f87171; } /* Red */
 
     .footNote {
       text-align: center;
-      font-size: 12px;
+      font-size: 13px;
       line-height: 1.4;
-      color: var(--text-dim);
-      max-width: 480px;
+      color: var(--muted);
+      max-width: 520px;
       margin: 24px auto 0;
     }
 
@@ -180,8 +181,8 @@
     .finalOverlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.95);
-      display: none; /* turned on after send */
+      background: rgba(15, 18, 32, 0.95);
+      display: none;
       align-items: center;
       justify-content: center;
       z-index: 9999;
@@ -189,27 +190,27 @@
     }
 
     .finalCard {
-      background: rgba(30, 41, 59, 0.9);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 20px;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
       max-width: 360px;
       width: 100%;
       padding: 24px 20px;
       text-align: center;
-      box-shadow: 0 30px 120px rgba(0,0,0,0.8);
+      box-shadow: var(--shadow);
     }
 
     .finalIcon {
       font-size: 32px;
       line-height: 1;
-      color: #4ade80; /* green-400 */
+      color: #4ade80;
       margin-bottom: 12px;
     }
 
     .finalTitle {
-      color: #fff;
+      color: var(--text);
       font-size: 18px;
-      font-weight: 600;
+      font-weight: 700;
       line-height: 1.3;
       margin-bottom: 8px;
     }
@@ -217,38 +218,35 @@
     .finalText {
       font-size: 14px;
       line-height: 1.4;
-      color: #94a3b8;
+      color: var(--muted);
       white-space: pre-line;
     }
   </style>
 </head>
 <body>
   <div class="wrapper">
-    <!-- top card: title + user -->
-    <section class="headerCard">
+    <section class="headerCard card">
       <div class="titleRow">
         <div class="pageTitle">
-          Support request
+          Support
         </div>
-        <div class="userInfo" id="userInfo">User: —</div>
-      </div>
+        </div>
       <div class="hint">
-        Tell us what’s wrong (upload issue, can't open, payment question, etc.).
+        Describe your problem or question (technical error, feature question, payment, etc.).
       </div>
     </section>
 
-    <!-- main card: form -->
     <section class="card">
       <div class="fieldGroup">
         <label class="fieldLabel" for="problemField">
-          Describe the problem
+          Problem Description
         </label>
         <textarea
           id="problemField"
           placeholder="Example:
-Can't upload document.
-App shows 'error'.
-Started today around 2 PM."
+The button is not working.
+An error appeared on the screen.
+The problem occurred today at 2 PM."
         ></textarea>
       </div>
 
@@ -261,16 +259,15 @@ Started today around 2 PM."
   </div>
 
   <div class="footNote">
-    We'll review and follow up.
+    We will review your request and get back to you.
   </div>
 
-  <!-- overlay after submit -->
   <div class="finalOverlay" id="finalOverlay">
     <div class="finalCard">
       <div class="finalIcon">✅</div>
-      <div class="finalTitle">Sent</div>
+      <div class="finalTitle">Request Sent</div>
       <div class="finalText">
-        We'll review shortly.
+        We will review it shortly.
         
         You can close this window now.
       </div>
@@ -278,17 +275,17 @@ Started today around 2 PM."
   </div>
 
   <script>
-    // ===== CONFIG =====
+    // ===== CONFIG (UNCHANGED) =====
     var SUPPORT_WEBHOOK_URL = "https://venture666.app.n8n.cloud/webhook/b981b421-cce9-450f-8006-13aa7916b416";
 
-    // ===== TELEGRAM CONTEXT =====
+    // ===== TELEGRAM CONTEXT (UNCHANGED) =====
     var tg = null;
     if (window.Telegram && window.Telegram.WebApp) {
       tg = window.Telegram.WebApp;
     }
 
     if (tg && typeof tg.expand === "function") {
-      tg.expand(); // ask Telegram for full height
+      tg.expand();
     }
 
     // try to read Telegram user
@@ -303,13 +300,7 @@ Started today around 2 PM."
     var telegramNameRaw = (telegramFirst + " " + telegramLast).trim();
     var telegramName    = telegramNameRaw || "User";
 
-    // fill header info
-    var userInfoEl = document.getElementById("userInfo");
-    if (telegramUserId) {
-      userInfoEl.textContent = telegramName + "\nID: " + telegramUserId;
-    } else {
-      userInfoEl.textContent = telegramName;
-    }
+    // REMOVED: fill header info (userInfoEl)
 
     // DOM refs
     var problemField = document.getElementById("problemField");
@@ -317,19 +308,11 @@ Started today around 2 PM."
     var statusMsg    = document.getElementById("statusMsg");
     var finalOverlay = document.getElementById("finalOverlay");
 
-    function lockUI() {
-      sendBtn.disabled = true;
-      problemField.disabled = true;
-    }
-
-    function unlockUI() {
-      sendBtn.disabled = false;
-      problemField.disabled = false;
-    }
-
-    function setStatus(color, text) {
-      statusMsg.style.color = color;
-      statusMsg.textContent = text;
+    // --- Helper function: setStatus updated to use CSS classes ---
+    function setStatus(className, text) {
+        // className should be 'ok', 'error', or ''
+        statusMsg.className = "statusMsg " + className;
+        statusMsg.textContent = text;
     }
 
     function showOverlayAndTryClose() {
@@ -371,12 +354,12 @@ Started today around 2 PM."
       var msg = problemField.value.trim();
 
       if (!msg) {
-        setStatus("#f87171", "Please describe the problem.");
+        setStatus("error", "Please describe the problem.");
         return;
       }
 
       lockUI();
-      setStatus("#94a3b8", "Sending...");
+      setStatus("ok", "Sending...");
 
       var payload = {
         telegram_user_id: telegramUserId,
@@ -399,16 +382,27 @@ Started today around 2 PM."
         }
 
         // success UI
-        setStatus("#4ade80", "Sent.");
+        setStatus("ok", "Sent.");
         showOverlayAndTryClose();
 
       } catch (err) {
         unlockUI();
-        setStatus("#f87171", "Error sending. Try again.");
+        setStatus("error", "Error sending. Try again.");
       }
     }
 
     sendBtn.addEventListener("click", sendSupportTicket);
+
+    function lockUI() {
+      sendBtn.disabled = true;
+      problemField.disabled = true;
+    }
+
+    function unlockUI() {
+      sendBtn.disabled = false;
+      problemField.disabled = false;
+    }
+
   </script>
 </body>
 </html>
