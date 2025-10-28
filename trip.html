@@ -25,6 +25,7 @@
     *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
     html,body{ height:100%; }
 
+    /* --- ИСПРАВЛЕННЫЙ BODY (как в index.html) --- */
     body{
       margin:0;
       color:var(--text);
@@ -33,25 +34,24 @@
         radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
         radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
         var(--bg);
+
+      /* Авто-выравнивание */
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 16px;
     }
 
-    .topbar{
-      position:sticky; top:0; z-index:10;
-      display:flex; align-items:center; gap:12px;
-      padding:14px 16px;
-      background: linear-gradient(180deg, rgba(15,18,32,.9), rgba(15,18,32,.65) 70%, rgba(15,18,32,0));
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--stroke);
-    }
-    .top-btn{
-      border:1px solid var(--stroke); background:transparent; color:var(--text);
-      padding:10px 12px; border-radius:14px; font-weight:700; cursor:pointer;
-    }
-    .top-btn:active{ transform: translateY(1px); }
-    .top-title{ font-weight:800; font-size:16px; }
+    /* УБРАН Topbar */
 
-    .wrap{ max-width:720px; margin:0 auto; padding:16px; }
+    /* .wrap - это теперь наша главная обертка, которую центрирует body */
+    .wrap{ 
+        max-width:520px; /* Стандартная ширина карточки */
+        width: 100%;
+        margin:0 auto; 
+    }
 
+    /* .section - это стиль карточки */
     .section{
       background: var(--card);
       border: 1px solid var(--stroke);
@@ -62,12 +62,13 @@
       margin-bottom: 14px;
     }
     .title{ font-weight:700; font-size:18px; margin:0 0 6px }
-    .hint{ color:var(--muted); margin:0 0 12px }
+    .hint{ color:var(--muted); margin:0 0 12px; font-size: 13px; }
 
     .grid{ display:grid; gap:12px }
     .grid-2{ grid-template-columns:1fr 1fr }
 
-    .card{
+    /* .card - это стиль для поля ввода, переименуем, чтобы не путать */
+    .field-card{
       background: rgba(255,255,255,0.05);
       border:1px solid var(--stroke);
       border-radius:14px; padding:14px;
@@ -78,13 +79,19 @@
       background: rgba(255,255,255,0.04);
       border-radius:14px; padding:14px 14px; font-size:16px; outline:none;
     }
+    input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(78,140,255,.3);
+    }
     input[type="date"]{ appearance:none; -webkit-appearance:none }
 
     .btn{
       background: var(--accent); color: var(--accentText);
       border:none; border-radius:14px; padding:14px 18px; font-weight:800; cursor:pointer;
+      transition: transform .12s ease;
     }
-    .btn:active{ transform: translateY(1px) }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); }
     .ghost{
       background:transparent; border:1px solid var(--stroke); color:var(--text); font-weight:700;
     }
@@ -97,10 +104,10 @@
       color: var(--text);
       border-radius:999px; padding:8px 12px; font-weight:700; cursor:pointer;
     }
-    .chip.active{ background:linear-gradient(135deg, rgba(78,140,255,.15), rgba(124,58,237,.18)); }
+    .chip.active{ background:linear-gradient(135deg, rgba(78,140,255,.15), rgba(124,58,237,.18)); border-color: var(--stroke); }
 
     .row{ display:flex; gap:12px }
-    .footer{ display:flex; gap:12px; justify-content:space-between; margin-top:16px }
+    .footer{ display:flex; gap:12px; justify-content:space-between; margin-top:16px; flex-wrap: wrap;}
 
     .err{ color:var(--err); margin:6px 2px 0 2px; font-size:14px }
     [hidden]{ display:none !important }
@@ -114,7 +121,8 @@
     }
     .kv-row{ display:flex; gap:12px; padding:10px 12px; border-top:1px solid var(--stroke) }
     .kv-row:first-child{ border-top:none }
-    .kv-k{ min-width:160px; color:var(--muted) }
+    .kv-k{ min-width:140px; color:var(--muted); font-size: 14px; }
+    .kv-v { word-break: break-word; }
 
     .banner{
       margin:10px 0; padding:10px 12px; border-radius:14px;
@@ -123,63 +131,50 @@
     }
     .banner.error{ border-color: rgba(255,0,0,.35); color:#ff6b6b; }
 
-    /* небольшая анимация для привлечения внимания к блоку с ошибкой */
     @keyframes shake {
-      0%{ transform: translateX(0) }
-      20%{ transform: translateX(-4px) }
-      40%{ transform: translateX(4px) }
-      60%{ transform: translateX(-3px) }
-      80%{ transform: translateX(3px) }
-      100%{ transform: translateX(0) }
+      0%{ transform: translateX(0) } 20%{ transform: translateX(-4px) } 40%{ transform: translateX(4px) }
+      60%{ transform: translateX(-3px) } 80%{ transform: translateX(3px) } 100%{ transform: translateX(0) }
     }
     .shake { animation: shake .35s ease; }
-    .outline-err { box-shadow: 0 0 0 2px rgba(244,63,94,.5) inset; }
+    .outline-err { box-shadow: 0 0 0 2px rgba(244,63,94,.5); border-color: var(--err); }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <button id="backMenuBtn" class="top-btn" type="button">← Back to menu</button>
-    <div class="top-title">Trip report</div>
-  </div>
-
   <div class="wrap">
 
-    <!-- Guard error banner -->
     <div id="guardError" class="banner error" hidden></div>
 
-    <!-- STEP 1: Trip -->
     <section id="step_trip" class="section" aria-live="polite">
       <div class="title">Trip report</div>
       <p class="hint">Fill out trip, loads and expenses. Your Telegram ID will be captured automatically.</p>
 
-      <!-- Баннер ошибок шага -->
       <div id="trip_banner" class="banner error" hidden></div>
 
       <div class="grid">
-        <div class="card">
+        <div class="field-card">
           <label for="start_location">Start location</label>
           <input id="start_location" placeholder="City, ST">
         </div>
         <div class="grid grid-2">
-          <div class="card">
+          <div class="field-card">
             <label for="start_date">Start date</label>
             <input id="start_date" type="date">
           </div>
-          <div class="card">
+          <div class="field-card">
             <label for="start_mileage">Start mileage</label>
             <input id="start_mileage" inputmode="numeric" placeholder="e.g., 102345">
           </div>
         </div>
-        <div class="card">
+        <div class="field-card">
           <label for="finish_location">Finish location</label>
           <input id="finish_location" placeholder="City, ST">
         </div>
         <div class="grid grid-2">
-          <div class="card">
+          <div class="field-card">
             <label for="finish_date">Finish date</label>
             <input id="finish_date" type="date">
           </div>
-          <div class="card">
+          <div class="field-card">
             <label for="finish_mileage">Finish mileage</label>
             <input id="finish_mileage" inputmode="numeric" placeholder="e.g., 103210">
           </div>
@@ -188,59 +183,53 @@
       </div>
 
       <div class="footer">
+        <button class="btn ghost" type="button" onclick="backToMenu()">Back to Menu</button>
         <button class="btn" type="button" onclick="goStep('loads')">Next → Loads</button>
-        <button class="btn ghost" type="button" onclick="backToMenu()">← Back</button>
       </div>
     </section>
 
-    <!-- STEP 2: Loads -->
     <section id="step_loads" class="section" aria-live="polite" hidden>
       <div class="title">Loads</div>
       <p class="hint">Add one or more loads. Partial/Tarp are quantities (can be 0 or empty).</p>
 
-      <!-- Баннер ошибок шага -->
       <div id="loads_banner" class="banner error" hidden></div>
 
       <div id="loadChips" class="chips"></div>
-      <div id="loadCard" class="card"></div>
+      <div id="loadCard" class="field-card"></div>
       <div id="loads_err" class="err" hidden></div>
 
       <div class="footer">
         <div class="row">
           <button class="btn ghost" type="button" onclick="addLoad()">+ Add load</button>
-          <button class="btn ghost" type="button" onclick="removeCurrentLoad()">Remove current</button>
+          <button class="btn ghost" type="button" onclick="removeCurrentLoad()">Remove</button>
         </div>
         <div class="row">
           <button class="btn ghost" type="button" onclick="goStep('trip')">← Back</button>
-          <button class="btn" type="button" onclick="goStep('expenses')">Next → Expenses</button>
+          <button class="btn" type="button" onclick="goStep('expenses')">Next →</button>
         </div>
       </div>
     </section>
 
-    <!-- STEP 3: Expenses -->
     <section id="step_expenses" class="section" aria-live="polite" hidden>
       <div class="title">Expenses</div>
       <p class="hint">Optional. Add fuel, parking, wash, etc.</p>
 
-      <!-- Баннер ошибок шага -->
       <div id="expenses_banner" class="banner error" hidden></div>
 
       <div id="expList" class="grid"></div>
-      <div class="row">
+      <div class="row" style="margin-top:12px;">
         <button class="btn" type="button" onclick="addExpense()">+ Add expense</button>
       </div>
 
       <div class="footer">
-        <button class="btn" type="button" onclick="goStep('review')">Next → Review</button>
         <button class="btn ghost" type="button" onclick="goStep('loads')">← Back</button>
+        <button class="btn" type="button" onclick="goStep('review')">Next → Review</button>
       </div>
     </section>
 
-    <!-- STEP 4: Review -->
     <section id="step_review" class="section" aria-live="polite" hidden>
       <div class="title">Review & submit</div>
 
-      <!-- Баннер ошибок шага -->
       <div id="review_banner" class="banner error" hidden></div>
 
       <div id="reviewBox" class="review-block"></div>
@@ -248,8 +237,8 @@
       <div id="submit_err" class="err" hidden></div>
 
       <div class="footer">
-        <button id="submitBtn" class="btn" type="button" onclick="submitTrip()">Submit</button>
         <button class="btn ghost" type="button" onclick="goStep('expenses')">← Back</button>
+        <button id="submitBtn" class="btn" type="button" onclick="submitTrip()">Submit</button>
       </div>
     </section>
 
@@ -335,7 +324,14 @@ function focusElem(id){
 function outlineError(id, on=true){
   const el = document.getElementById(id);
   if (!el) return;
-  if (on) el.classList.add('outline-err'); else el.classList.remove('outline-err');
+  const parentCard = el.closest('.field-card'); // Находим родительскую field-card
+  if (on) {
+      if (parentCard) parentCard.classList.add('outline-err');
+      else el.classList.add('outline-err');
+  } else {
+      if (parentCard) parentCard.classList.remove('outline-err');
+      else el.classList.remove('outline-err');
+  }
 }
 
 /* ---------- Original state/logic (format unchanged) ---------- */
@@ -385,6 +381,10 @@ function goStep(step){
   document.getElementById('step_loads').hidden    = step!=='loads';
   document.getElementById('step_expenses').hidden = step!=='expenses';
   document.getElementById('step_review').hidden   = step!=='review';
+  
+  // Скролл к верху новой секции
+  const newSection = document.getElementById(`step_${step}`);
+  if(newSection) newSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function validateTrip(){
@@ -413,7 +413,7 @@ function validateTrip(){
     document.getElementById('step_trip').scrollIntoView({behavior:'smooth', block:'start'});
     return false;
   }
-  if (finishMil < startMil){
+   if (finishMil > 0 && finishMil < startMil){ // Проверяем только если finishMil > 0
     err.textContent='Finish mileage must be ≥ start mileage.'; err.hidden=false;
     setBanner('trip_banner', 'Finish mileage must be greater than or equal to Start mileage.');
     outlineError('finish_mileage',true); focusElem('finish_mileage');
@@ -427,6 +427,7 @@ function validateTrip(){
 function val(id){ return (document.getElementById(id)?.value || '').trim(); }
 
 function addLoad(){
+  saveCurrentLoad(); // Сохраняем текущий перед добавлением нового
   state.loads.push({date:'', pickup:'', delivery:'', partial:'', tarp:''});
   state.currentLoadIndex = state.loads.length-1;
   renderLoads();
@@ -520,13 +521,17 @@ function addExpense(){
 }
 function removeExpense(idx){
   state.expenses.splice(idx,1);
-  renderExpenses();
+  if (state.expenses.length === 0) { // Если удалили последний, добавляем пустой
+      addExpense();
+  } else {
+      renderExpenses();
+  }
 }
 function renderExpenses(){
   const box=document.getElementById('expList'); box.innerHTML='';
   if (state.expenses.length===0){ state.expenses=[{name:'',price:''}]; }
   state.expenses.forEach((e,idx)=>{
-    const row=document.createElement('div'); row.className='card';
+    const row=document.createElement('div'); row.className='field-card'; // Используем field-card
     row.innerHTML = `
       <div class="grid grid-2">
         <div>
@@ -538,7 +543,7 @@ function renderExpenses(){
           <input inputmode="decimal" data-i="${idx}" data-k="price" placeholder="e.g., 25.50" value="${esc(e.price||'')}">
         </div>
       </div>
-      <div class="row" style="margin-top:10px">
+      <div class="row" style="margin-top:10px; justify-content: flex-end;">
         <button class="btn ghost" type="button" onclick="removeExpense(${idx})">Remove</button>
       </div>
     `;
@@ -547,7 +552,7 @@ function renderExpenses(){
   box.querySelectorAll('input').forEach(inp=>{
     inp.addEventListener('input', (e)=>{
       const i=Number(e.target.dataset.i), k=e.target.dataset.k;
-      state.expenses[i][k]=e.target.value;
+      if (state.expenses[i]) state.expenses[i][k]=e.target.value;
     });
   });
 }
@@ -559,10 +564,10 @@ function renderReview(){
   rv.push(`<div class="rv-title">Trip</div>`);
   rv.push(`<div class="kv">
     ${row('Start location', payload.trip.start_location)}
-    ${row('Start date',     payload.trip.start_date||'')}
+    ${row('Start date',     payload.trip.start_date||'N/A')}
     ${row('Start mileage',  payload.trip.start_mileage)}
     ${row('Finish location',payload.trip.finish_location)}
-    ${row('Finish date',    payload.trip.finish_date||'')}
+    ${row('Finish date',    payload.trip.finish_date||'N/A')}
     ${row('Finish mileage', payload.trip.finish_mileage)}
   </div>`);
 
@@ -575,36 +580,49 @@ function renderReview(){
       if (L.delivery) Lrows.push(row('Delivery', L.delivery));
       if (L.partial!=='' && L.partial!=null) Lrows.push(row('Partial (qty)', L.partial));
       if (L.tarp!=='' && L.tarp!=null)       Lrows.push(row('Tarp (qty)', L.tarp));
-      rv.push(`<div class="kv rv-load">
-        <div class="kv-row"><div class="kv-k">Load</div><div>#${idx+1}</div></div>
+      
+      if (Lrows.length === 0) Lrows.push(row('Info', 'Empty load skipped'));
+
+      rv.push(`<div class="kv" style="margin-top: 8px;">
+        <div class="kv-row"><div class="kv-k" style="color: var(--text);">Load</div><div class="kv-v">#${idx+1}</div></div>
         ${Lrows.join('')}
       </div>`);
     });
   } else {
-    rv.push(`<div class="kv"><div class="kv-row"><div class="kv-k">—</div><div>No loads</div></div></div>`);
+    rv.push(`<div class="kv"><div class="kv-row"><div class="kv-k">—</div><div class="kv-v">No loads</div></div></div>`);
   }
 
   const exps = (payload.expenses||[]).filter(e=> (e.name&&e.name.trim()) || (e.price!=='' && !Number.isNaN(Number(e.price))));
   rv.push(`<div class="rv-title" style="margin-top:10px">Expenses${exps.length?` (${exps.length})`:''}</div>`);
   if (exps.length){
     exps.forEach((e,idx)=> rv.push(
-      `<div class="kv rv-load">
-         <div class="kv-row"><div class="kv-k">Item</div><div>#${idx+1}</div></div>
+      `<div class="kv" style="margin-top: 8px;">
+         <div class="kv-row"><div class="kv-k" style="color: var(--text);">Item</div><div class="kv-v">#${idx+1}</div></div>
          ${e.name?row('Name',e.name):''}
          ${e.price!==''?row('Price',e.price):''}
        </div>`
     ));
   } else {
-    rv.push(`<div class="kv"><div class="kv-row"><div class="kv-k">—</div><div>No expenses</div></div></div>`);
+    rv.push(`<div class="kv"><div class="kv-row"><div class="kv-k">—</div><div class="kv-v">No expenses</div></div></div>`);
   }
 
   document.getElementById('reviewBox').innerHTML = rv.join('');
 
-  function row(k,v){ return `<div class="kv-row"><div class="kv-k">${esc(k)}</div><div>${esc(String(v||''))}</div></div>`; }
+  function row(k,v){ return `<div class="kv-row"><div class="kv-k">${esc(k)}</div><div class="kv-v">${esc(String(v||''))}</div></div>`; }
 }
 
 function buildPayload(){
   saveCurrentLoad();
+  // Фильтруем пустые "заполнители"
+  const validLoads = state.loads.filter(isLoadFilled).map(L=>({
+      date: L.date||'',
+      pickup: L.pickup||'',
+      delivery: L.delivery||'',
+      partial: L.partial,
+      tarp: L.tarp
+  }));
+  const validExpenses = state.expenses.filter(e => (e.name && e.name.trim()) || (e.price !== '' && !Number.isNaN(Number(e.price)))).map(e=>({ name:e.name||'', price:e.price||'' }));
+
   return {
     trip:{
       start_location: val('start_location'),
@@ -614,14 +632,8 @@ function buildPayload(){
       finish_date: document.getElementById('finish_date')?.value || '',
       finish_mileage: Number(val('finish_mileage')||'0'),
     },
-    loads: state.loads.map(L=>({
-      date: L.date||'',
-      pickup: L.pickup||'',
-      delivery: L.delivery||'',
-      partial: L.partial,
-      tarp: L.tarp
-    })),
-    expenses: state.expenses.map(e=>({ name:e.name||'', price:e.price||'' })),
+    loads: validLoads,
+    expenses: validExpenses,
     client_token: tg?.initData || '',
     _tg_meta: {
       initData: tg?.initData || '',
@@ -650,6 +662,13 @@ async function submitTrip(){
   if (now-last<120000){ showSubmitError('You have recently submitted a trip. Please try again in a minute.'); return; }
 
   const payload = buildPayload();
+  // Если после фильтрации не осталось грузов, блокируем отправку (еще раз)
+  if (payload.loads.length === 0) {
+      setBanner('review_banner','Add at least one valid Load.'); 
+      goStep('loads');
+      return;
+  }
+  
   clearSubmitError(); lockSubmit(true);
   try{
     const res = await fetch(WEBHOOK_URL,{
@@ -662,7 +681,12 @@ async function submitTrip(){
     });
     if (!res.ok){ throw new Error(`HTTP ${res.status}: ${await res.text()}`); }
     localStorage.setItem(lk,String(now));
-    if (tg){ tg.showPopup({message:'Submitted! Thank you.'}); tg.close(); } else alert('Submitted!');
+    if (tg){ 
+        tg.showPopup({ title: 'Success', message:'Submitted! Thank you.' }); 
+        setTimeout(() => tg.close(), 1500); // Даем пользователю время увидеть
+    } else {
+        alert('Submitted!');
+    }
   }catch(e){ showSubmitError(e.message||'Submit error'); }
   finally{ lockSubmit(false); }
 }
@@ -678,10 +702,12 @@ async function submitTrip(){
 
   if (state.loads.length===0) state.loads=[{date:'',pickup:'',delivery:'',partial:'',tarp:''}];
   renderLoads();
+  
+  if (state.expenses.length===0) state.expenses=[{name:'',price:''}];
+  renderExpenses();
 
-  document.getElementById('backMenuBtn')?.addEventListener('click', backToMenu);
+  // УБРАН listener для backMenuBtn
 })();
 </script>
 </body>
 </html>
-
