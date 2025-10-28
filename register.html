@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <title>Driver • Register</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Driver • Menu</title>
+  <meta name="color-scheme" content="dark light" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root{
@@ -16,125 +17,147 @@
       --stroke: rgba(255,255,255,0.12);
       --shadow: 0 10px 30px rgba(0,0,0,0.25);
       --radius: 18px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
+    body{
+      margin:0;
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);
       background:
         radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
         radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
         var(--bg);
-      display: grid;
-      place-items: center;
-      padding: 16px;
+      padding: calc(12px + var(--safe-top)) 16px calc(20px + var(--safe-bottom));
+      display:flex; align-items:center; justify-content:center;
     }
-    .card {
-      width: 100%;
-      max-width: 520px;
-      background: var(--card);
-      border: 1px solid var(--stroke);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+    .card{
+      width:100%;
+      max-width:520px;
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      padding: 20px;
+      padding:20px;
     }
-    .head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .logo {
-      width: 38px; height: 38px; border-radius: 12px;
+    .head{ display:flex; align-items:center; gap:12px; margin-bottom: 20px; }
+    .logo{
+      width:38px; height:38px; border-radius:12px;
       background: linear-gradient(135deg, var(--accent), #7c3aed);
-      display: grid; place-items: center; color: var(--accentText); font-weight: 800;
-      box-shadow: 0 6px 16px rgba(0,0,0,.25); user-select: none; flex: 0 0 38px;
+      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+      flex:0 0 38px;
     }
-    h1 { font-size: 18px; line-height: 1.25; margin: 0; }
-    .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    h1{ font-size:18px; line-height:1.25; margin:0; }
+    .sub{ color:var(--muted); font-size:13px; margin-top:4px; }
 
-    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
-
-    .tile {
-      border: 1px solid var(--stroke);
-      border-radius: 16px;
-      padding: 16px;
-      background: rgba(255,255,255,0.05);
-      box-shadow: 0 6px 16px rgba(0,0,0,.15);
-      cursor: pointer;
-      transition: transform .12s ease, border-color .12s ease, background .12s ease;
-      user-select: none;
-      display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: 12px;
-      min-height: 64px;
-      color: inherit;
-      text-align: left;
+    /* --- NEW INPUT TILE STYLES --- */
+    .input-tile {
+        /* Mimic the tile in index.html */
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        padding: 16px;
+        background: rgba(255,255,255,0.05);
+        box-shadow: 0 6px 16px rgba(0,0,0,.15);
+        transition: box-shadow .12s ease, transform .12s ease;
     }
-    .tile:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.25); }
-    .tile:active { transform: translateY(0); }
-    .icn {
-      height: 44px; width: 44px; border-radius: 12px;
-      display: grid; place-items: center; font-size: 22px;
-      background: linear-gradient(135deg, rgba(78,140,255,.15), rgba(124,58,237,.18));
-      border: 1px solid var(--stroke);
-      flex: 0 0 44px;
+    .input-tile:focus-within {
+        /* Glow effect on focus */
+        box-shadow: 0 0 0 2px var(--accent), 0 6px 16px rgba(0,0,0,.15);
+        transform: translateY(-1px); /* Slight lift on focus */
     }
-    .ttl { font-weight: 700; font-size: 15px; }
-    .desc { color: var(--muted); font-size: 12px; margin-top: 4px; }
 
-    .close {
-      margin-top: 14px; width: 100%;
-      border-radius: 14px; padding: 14px 16px;
-      border: 1px solid var(--stroke);
-      background: transparent; color: var(--text);
-      font-weight: 600; cursor: pointer;
-      transition: background .12s ease, transform .12s ease;
+    label{
+      /* Label is now part of the tile structure */
+      display:flex; align-items:center; gap:8px;
+      font-weight:700; font-size:14px; margin:0 0 8px 0;
+      color:var(--text);
     }
-    .close:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
-    .close:active { transform: translateY(0); }
+    .tile-icon {
+        font-size: 18px; /* Icon size */
+        line-height: 1;
+    }
 
-    .error { color: #ff6b6b; font-size: 13px; margin: 8px 0 0; }
-    .hidden { display: none; }
+    /* Actual input field, now transparent and borderless inside the tile */
+    .text-input{
+      width:100%; height:auto; border-radius:0;
+      border:none;
+      background:transparent;
+      color:var(--text);
+      padding:0; outline:none;
+      font-size:16px;
+    }
+    .text-input::placeholder { color: var(--muted); opacity: 0.7; }
+    /* --- END NEW INPUT TILE STYLES --- */
+
+
+    .row{ display:flex; gap:10px; margin-top: 20px; }
+    .btn{
+      flex:1; padding:14px 16px; border-radius:14px; border:0;
+      background:var(--accent); color:var(--accentText); font-weight:800;
+      cursor:pointer; transition: transform .12s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); }
+    .btn.secondary{
+      background:transparent; color:var(--text);
+      border:1px solid var(--stroke); font-weight:700;
+    }
+    .btn[disabled]{ opacity:.6; pointer-events:none; }
+
+    .msg{ font-size:13px; margin-top:8px; display:none; }
+    .msg.error{ color:#ff6b6b; }
+    .msg.ok{ color:#2ecc71; }
+
+    .hint{ color:var(--muted); font-size:13px; margin-top:8px; }
+
+    .extra-row {
+        margin-top: 10px;
+    }
+    .extra-row .btn.secondary {
+        width: 100%; /* Make the support button full width */
+        flex: auto;
+    }
   </style>
 </head>
 <body>
   <main class="card">
     <div class="head">
-      <div class="logo">⋯</div>
+      <div class="logo"></div>
       <div>
-        <h1>Menu</h1>
-        <div id="subtitle" class="sub">Choose an option</div>
+        <h1>Quick Registration</h1>
+        <div class="sub">We’ll link your Telegram to your driver profile.</div>
       </div>
     </div>
 
-    <div id="guardError" class="error hidden"></div>
-
-    <section class="grid">
-      <div id="uploadBtn" class="tile" role="button" tabindex="0">
-        <div class="icn">📤</div>
-        <div>
-          <div class="ttl">Upload BOL</div>
-          <div class="desc">Upload a BOL document</div>
-        </div>
-      </div>
-
-      <div id="tripBtn" class="tile" role="button" tabindex="0">
-        <div class="icn">🚚</div>
-        <div>
-          <div class="ttl">Trip Form</div>
-          <div class="desc">Complete trip form</div>
-        </div>
-      </div>
-      
-      <div id="supportBtn" class="tile" role="button" tabindex="0">
-        <div class="icn">💬</div>
-        <div>
-          <div class="ttl">Support</div>
-          <div class="desc">Get help with the app</div>
-        </div>
-      </div>
-      
+    <section class="input-tile">
+        <label for="fullName">
+            <span class="tile-icon">👤</span>Full name
+        </label>
+        <input
+            id="fullName"
+            class="text-input"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            placeholder="e.g., John Smith"
+        />
     </section>
+    <div id="msg" class="msg"></div>
 
-    <button class="close" id="closeBtn">Close</button>
+    <div class="row">
+      <button id="backBtn" class="btn secondary" type="button">Back</button>
+      <button id="goBtn" class="btn" type="button">Continue</button>
+    </div>
+
+    <div class="extra-row">
+        <button id="supportBtn" class="btn secondary" type="button">Support</button>
+    </div>
+
+    <div id="hint" class="hint"></div>
   </main>
 
   <script>
@@ -146,78 +169,79 @@
     const ME_URL   = `${API_BASE}/rapid-function`;
     const REG_URL  = `${API_BASE}/clever-action`;
 
-    // --- Cache key (unchanged)
+    // --- Keys / locks (unchanged)
     const KEY_ME = 'me:v1';
+    const LOCK_PREFIX = 'register_lock_';
 
     function getUserId(){ return tg?.initDataUnsafe?.user?.id ?? null; }
+    function writeCache(obj){ try{ sessionStorage.setItem(KEY_ME, JSON.stringify(obj)); }catch{} }
 
-    function readCache(){
-      try{ return JSON.parse(sessionStorage.getItem(KEY_ME) || 'null'); }catch{ return null; }
-    }
+    const msgEl = document.getElementById('msg');
+    function showError(t){ msgEl.textContent=t; msgEl.className='msg error'; msgEl.style.display='block'; }
+    function showOk(t){ msgEl.textContent=t; msgEl.className='msg ok'; msgEl.style.display='block'; }
 
-    function writeCache(obj){
-      try{ sessionStorage.setItem(KEY_ME, JSON.stringify(obj)); }catch{}
-    }
+    // Back to menu
+    document.getElementById('backBtn').onclick = () => location.replace('index.html');
 
-    async function fetchMe(){
-      const res = await fetch(ME_URL, {
-        method:'POST',
-        headers:{
-          'content-type':'application/json',
-          'x-telegram-init-data': tg?.initData || ''
-        },
-        body: JSON.stringify({_tg_meta:{initData: tg?.initData||'', user: tg?.initDataUnsafe?.user||null}})
-      });
-      if(!res.ok) throw new Error('Network error');
-      return await res.json();
-    }
+    // Support button logic
+    document.getElementById('supportBtn').onclick = () => location.replace('support.html');
 
-    async function ensureRegistered(){
+    let inFlight = false;
+
+    async function doRegister(){
+      if(inFlight) return;
+
+      const fullName = (document.getElementById('fullName').value || '').trim();
+      if(!fullName){ showError('Please enter your full name.'); return; }
+
       const uid = getUserId();
-      const cached = readCache();
-      if (cached && cached.userId === uid && cached.registered) return cached;
-
-      const data = await fetchMe();
-      const payload = { userId: uid, registered: !!data?.registered, profile: data?.profile || null };
-      writeCache(payload);
-      if (!payload.registered) {
-        location.replace('register.html');
-        return null;
+      const lockKey = LOCK_PREFIX + (uid ?? 'nouser');
+      const now = Date.now();
+      const last = Number(localStorage.getItem(lockKey) || 0);
+      if (now - last < 60_000){
+        const left = Math.ceil((60_000 - (now-last))/1000);
+        showError(`Try again in ${left}s.`);
+        return;
       }
-      return payload;
+
+      inFlight = true;
+      localStorage.setItem(lockKey, String(now));
+      const btn = document.getElementById('goBtn');
+      const hint = document.getElementById('hint');
+      btn.disabled = true; btn.textContent = 'Registering…'; hint.textContent = '';
+
+      try{
+        const res = await fetch(REG_URL, {
+          method:'POST',
+          headers:{
+            'content-type':'application/json',
+            'x-telegram-init-data': tg?.initData || ''
+          },
+          body: JSON.stringify({
+            full_name: fullName,
+            _tg_meta:{ initData: tg?.initData||'', user: tg?.initDataUnsafe?.user||null }
+          })
+        });
+
+        const body = await res.json().catch(()=>({}));
+        if(!res.ok){ throw new Error(body?.error || 'Network error'); }
+
+        writeCache({ userId: uid, registered:true, profile: { full_name: fullName } });
+        showOk('Registered!');
+        location.replace('index.html');
+      }catch(e){
+        showError(String(e.message||e));
+        btn.disabled = false; btn.textContent = 'Continue';
+        inFlight = false;
+      }
     }
 
-    // --- Boot: greet user (unchanged)
-    (async () => {
-      try{
-        const me = await ensureRegistered();
-        if(!me) return; // redirected
-        const name = me?.profile?.full_name || tg?.initDataUnsafe?.user?.first_name || '';
-        if (name) document.getElementById('subtitle').textContent = `Welcome, ${name}`;
-      }catch(e){
-        const el = document.getElementById('guardError');
-        el.textContent = 'Failed to verify registration. Pull to refresh or try again.';
-        el.classList.remove('hidden');
-      }
-    })();
+    document.getElementById('goBtn').onclick = doRegister;
 
-    // --- Actions (unchanged logic)
-    document.getElementById('uploadBtn')?.addEventListener('click', async () => {
-      const me = await ensureRegistered(); if(!me) return;
-      location.replace('upload.html');
+    // Submit on Enter
+    document.getElementById('fullName').addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); doRegister(); }
     });
-
-    document.getElementById('tripBtn')?.addEventListener('click', async () => {
-      const me = await ensureRegistered(); if(!me) return;
-      location.replace('trip.html');
-    });
-    
-    // --- New Action for Support
-    document.getElementById('supportBtn')?.addEventListener('click', () => {
-      location.replace('support.html');
-    });
-
-    document.getElementById('closeBtn')?.addEventListener('click', () => tg?.close?.());
   </script>
 </body>
 </html>
