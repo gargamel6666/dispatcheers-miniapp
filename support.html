@@ -183,9 +183,7 @@
         <div class="pageTitle">
           Support request
         </div>
-        <div class="userInfo" id="userInfo">
-          User: —
-        </div>
+        <div class="userInfo" id="userInfo">User: —</div>
       </div>
       <div class="hint">
         Tell us what’s wrong (upload issue, can't open, payment question, etc.).
@@ -220,92 +218,110 @@ Started today around 2 PM."
   </div>
 
   <script>
-  // Telegram WebApp context
-  const tg = window.Telegram && window.Telegram.WebApp
-    ? window.Telegram.WebApp
-    : null;
+    // === CONFIG ===
+    // put your n8n (or other) webhook URL here:
+    var SUPPORT_WEBHOOK_URL = "https://SUPPORT_WEBHOOK_URL";
 
-  if (tg && tg.expand) {
-    tg.expand();
-  }
-
-  // Extract Telegram user info (neutral, role-agnostic)
-  const tgUser = tg?.initDataUnsafe?.user || {};
-  const telegramUserId = tgUser.id || null;
-  const telegramFirst  = tgUser.first_name || '';
-  const telegramLast   = tgUser.last_name || '';
-  const telegramName = [telegramFirst, telegramLast]
-    .filter(Boolean)
-    .join(' ')
-    .trim() || 'User';
-
-  // Fill header with simple user info
-  const userInfoEl = document.getElementById('userInfo');
-  userInfoEl.textContent = telegramUserId
-    ? `${telegramName}\nID: ${telegramUserId}`
-    : telegramName;
-
-  // Elements
-  const problemField = document.getElementById('problemField');
-  const sendBtn      = document.getElementById('sendBtn');
-  const statusMsg    = document.getElementById('statusMsg');
-
-  async function sendSupportTicket() {
-    const message = problemField.value.trim();
-
-    if (!message) {
-      statusMsg.style.color = "#f87171"; // red-400
-      statusMsg.textContent = "Please describe the problem.";
-      return;
+    // === TELEGRAM CONTEXT SETUP ===
+    var tg = null;
+    if (window.Telegram && window.Telegram.WebApp) {
+      tg = window.Telegram.WebApp;
     }
 
-    // lock UI to prevent spam
-    sendBtn.disabled = true;
-    problemField.disabled = true;
-    statusMsg.style.color = "#94a3b8"; // slate-400
-    statusMsg.textContent = "Sending...";
+    if (tg && typeof tg.expand === "function") {
+      // ask Telegram to give us max height
+      tg.expand();
+    }
 
-    try {
-      // IMPORTANT: replace this with your real webhook URL
-      const resp = await fetch("https://SUPPORT_WEBHOOK_URL", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          telegram_user_id: telegramUserId,
-          telegram_name: telegramName,
-          message,
-          ts_client: new Date().toISOString()
-        })
-      });
+    // pull user info safely (no optional chaining to avoid older engines choking)
+    var tgUser = {};
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      tgUser = tg.initDataUnsafe.user;
+    }
 
-      if (!resp.ok) {
-        throw new Error("Request failed");
-      }
+    var telegramUserId  = tgUser.id || null;
+    var telegramFirst   = tgUser.first_name || "";
+    var telegramLast    = tgUser.last_name || "";
+    var telegramNameRaw = (telegramFirst + " " + telegramLast).trim();
+    var telegramName    = telegramNameRaw || "User";
 
-      // success visual
-      statusMsg.style.color = "#4ade80"; // green-400
-      statusMsg.textContent = "✅ Sent. We'll review shortly.";
+    // fill header block
+    var userInfoEl = document.getElementById("userInfo");
+    if (telegramUserId) {
+      userInfoEl.textContent = telegramName + "\nID: " + telegramUserId;
+    } else {
+      userInfoEl.textContent = telegramName;
+    }
 
-      // small delay then close mini app
-      setTimeout(() => {
-        if (tg && tg.close) {
-          tg.close(); // this closes the WebApp and returns user to chat
-        }
-      }, 1500);
+    // DOM refs
+    var problemField = document.getElementById("problemField");
+    var sendBtn      = document.getElementById("sendBtn");
+    var statusMsg    = document.getElementById("statusMsg");
 
-    } catch (err) {
-      // unlock so they can retry
+    function lockUI() {
+      sendBtn.disabled = true;
+      problemField.disabled = true;
+    }
+
+    function unlockUI() {
       sendBtn.disabled = false;
       problemField.disabled = false;
-
-      statusMsg.style.color = "#f87171"; // red-400
-      statusMsg.textContent = "Error sending. Try again.";
     }
-  }
 
-  sendBtn.addEventListener('click', sendSupportTicket);
-</script>
+    function setStatus(color, text) {
+      statusMsg.style.color = color;
+      statusMsg.textContent = text;
+    }
+
+    async function sendSupportTicket() {
+      var msg = problemField.value.trim();
+
+      if (!msg) {
+        setStatus("#f87171", "Please describe the problem.");
+        return;
+      }
+
+      lockUI();
+      setStatus("#94a3b8", "Sending...");
+
+      var payload = {
+        telegram_user_id: telegramUserId,
+        telegram_name: telegramName,
+        message: msg,
+        ts_client: new Date().toISOString()
+      };
+
+      try {
+        var resp = await fetch(SUPPORT_WEBHOOK_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+          throw new Error("Request failed with status " + resp.status);
+        }
+
+        // success
+        setStatus("#4ade80", "✅ Sent. We'll review shortly.");
+
+        // try to auto-close mini app after short delay
+        setTimeout(function () {
+          if (tg && typeof tg.close === "function") {
+            tg.close();
+          }
+        }, 1500);
+
+      } catch (err) {
+        // failed, let them try again
+        unlockUI();
+        setStatus("#f87171", "Error sending. Try again.");
+      }
+    }
+
+    sendBtn.addEventListener("click", sendSupportTicket);
+  </script>
 </body>
 </html>
