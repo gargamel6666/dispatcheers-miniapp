@@ -108,7 +108,6 @@
     <div id="guardError" class="error hidden"></div>
 
     <section class="grid">
-      <!-- Upload BOL -->
       <div id="uploadBtn" class="tile" role="button" tabindex="0">
         <div class="icn">📤</div>
         <div>
@@ -117,7 +116,6 @@
         </div>
       </div>
 
-      <!-- Trip Form -->
       <div id="tripBtn" class="tile" role="button" tabindex="0">
         <div class="icn">🚚</div>
         <div>
@@ -125,6 +123,15 @@
           <div class="desc">Complete trip form</div>
         </div>
       </div>
+      
+      <div id="supportBtn" class="tile" role="button" tabindex="0">
+        <div class="icn">💬</div>
+        <div>
+          <div class="ttl">Support</div>
+          <div class="desc">Get help with the app</div>
+        </div>
+      </div>
+      
     </section>
 
     <button class="close" id="closeBtn">Close</button>
@@ -204,9 +211,13 @@
       const me = await ensureRegistered(); if(!me) return;
       location.replace('trip.html');
     });
+    
+    // --- New Action for Support
+    document.getElementById('supportBtn')?.addEventListener('click', () => {
+      location.replace('support.html');
+    });
 
     document.getElementById('closeBtn')?.addEventListener('click', () => tg?.close?.());
   </script>
 </body>
 </html>
-
