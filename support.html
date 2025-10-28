@@ -128,9 +128,17 @@
       box-shadow: 0 0 0 2px rgba(78,140,255,.3);
     }
 
+    /* Кнопки и ряд кнопок */
+    .buttonRow {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px; /* Отступ сверху для кнопок */
+        flex-wrap: wrap;
+    }
+    
     .buttonPrimary {
       appearance: none;
-      width: 100%;
+      flex: 1; /* Чтобы занимать половину */
       border: 0;
       border-radius: var(--radius-sm);
       background: var(--accent);
@@ -145,6 +153,26 @@
     }
     .buttonPrimary:hover { transform: translateY(-1px); }
     .buttonPrimary:active { transform: translateY(0); }
+    
+    /* Дополнительный класс для кнопки Назад */
+    .buttonSecondary {
+        appearance: none;
+        flex: 1;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--stroke);
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.2;
+        padding: 14px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform .12s ease;
+    }
+    .buttonSecondary:hover { transform: translateY(-1px); }
+    .buttonSecondary:active { transform: translateY(0); }
+
 
     .buttonPrimary[disabled] {
       background: var(--tg-theme-button-color, #4e8cff);
@@ -152,6 +180,11 @@
       color: var(--accentText);
       pointer-events: none;
       transform: none;
+    }
+    .buttonSecondary[disabled] {
+        opacity: 0.6;
+        pointer-events: none;
+        transform: none;
     }
 
     .statusMsg {
@@ -174,7 +207,6 @@
       max-width: 520px;
       margin: 24px auto 0;
       
-      /* Прикрепим к обертке, а не к body */
       position: relative; 
     }
 
@@ -251,10 +283,15 @@ The problem occurred today at 2 PM."
         ></textarea>
       </div>
 
-      <button id="sendBtn" class="buttonPrimary">
-        Send
-      </button>
-
+      <div class="buttonRow">
+        <button id="backBtn" class="buttonSecondary">
+          Back to menu
+        </button>
+        <button id="sendBtn" class="buttonPrimary">
+          Send
+        </button>
+      </div>
+      
       <div class="statusMsg" id="statusMsg"></div>
     </section>
     
@@ -301,11 +338,10 @@ The problem occurred today at 2 PM."
     var telegramNameRaw = (telegramFirst + " " + telegramLast).trim();
     var telegramName    = telegramNameRaw || "User";
 
-    // REMOVED: fill header info (userInfoEl)
-
     // DOM refs
     var problemField = document.getElementById("problemField");
     var sendBtn      = document.getElementById("sendBtn");
+    var backBtn      = document.getElementById("backBtn");
     var statusMsg    = document.getElementById("statusMsg");
     var finalOverlay = document.getElementById("finalOverlay");
 
@@ -348,6 +384,16 @@ The problem occurred today at 2 PM."
       }
 
     }
+    
+    // --- Навигация
+    function backToMenu(){
+      try { location.replace('index.html'); }
+      catch(e){}
+      finally { setTimeout(()=> tg?.close?.(), 150); }
+    }
+    
+    backBtn.addEventListener("click", backToMenu);
+
 
     async function sendSupportTicket() {
       var msg = problemField.value.trim();
@@ -394,11 +440,13 @@ The problem occurred today at 2 PM."
 
     function lockUI() {
       sendBtn.disabled = true;
+      backBtn.disabled = true;
       problemField.disabled = true;
     }
 
     function unlockUI() {
       sendBtn.disabled = false;
+      backBtn.disabled = false;
       problemField.disabled = false;
     }
 
