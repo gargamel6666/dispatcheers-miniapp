@@ -20,6 +20,8 @@
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; }
+    
+    /* --- ИСПРАВЛЕННЫЙ BODY (как в index.html) --- */
     body {
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -28,29 +30,20 @@
         radial-gradient(1200px 600px at 100% -10%, rgba(78,140,255,0.25), transparent 60%),
         radial-gradient(1000px 500px at -10% 110%, rgba(168,85,247,0.20), transparent 60%),
         var(--bg);
+      
+      /* Авто-выравнивание */
       display: grid;
+      place-items: center;
+      min-height: 100vh; /* Убедимся, что центрирование работает по всей высоте */
       padding: 16px;
     }
 
-    /* Topbar */
-    .topbar{
-      position:sticky; top:0; z-index:10;
-      display:flex; align-items:center; gap:12px;
-      padding:14px 16px;
-      background: linear-gradient(180deg, rgba(15,18,32,.9), rgba(15,18,32,.65) 70%, rgba(15,18,32,0));
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--stroke);
-    }
-    .top-btn{
-      border:1px solid var(--stroke); background:transparent; color:var(--text);
-      padding:10px 12px; border-radius:14px; font-weight:700; cursor:pointer;
-    }
-    .top-title{ font-weight:800; font-size:16px; }
+    /* УБРАН Topbar */
 
     /* Card */
-    .wrap { width:100%; max-width: 520px; margin: 0 auto; }
     .card {
       width: 100%;
+      max-width: 520px; /* Добавлено для консистентности */
       background: var(--card);
       border: 1px solid var(--stroke);
       border-radius: var(--radius);
@@ -58,7 +51,6 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       padding: 20px;
-      margin-top: 14px;
     }
     .head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .logo {
@@ -71,14 +63,15 @@
     .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
 
     .banner{
-      margin:10px 0; padding:10px 12px; border-radius:14px;
+      margin-top: 10px; /* Отступ сверху */
+      padding:10px 12px; border-radius:14px;
       border:1px solid var(--stroke); background: rgba(255,255,255,0.04);
       color: var(--text); font-size:14px; display:none;
     }
     .banner.error{ border-color: rgba(255,0,0,.35); color:#ff6b6b; }
     .banner.ok{ border-color: rgba(46, 204, 113, .35); color:#2ecc71; }
 
-    label { display:block; font-weight:700; font-size:14px; margin:10px 0 6px; }
+    label { display:block; font-weight:700; font-size:14px; margin:16px 0 6px; }
     .input{
       width:100%; border-radius:14px; border:1px solid var(--stroke);
       background: rgba(255,255,255,0.04); color:var(--text);
@@ -86,13 +79,14 @@
     }
     .hint { color:var(--muted); font-size:13px; margin-top:8px; }
 
-    .row{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+    .row{ display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
     .btn{
       flex:1; padding:14px 16px; border-radius:14px; border:0;
       background:var(--accent); color:var(--accentText); font-weight:800;
       cursor:pointer; transition: transform .12s ease;
     }
-    .btn:active{ transform: translateY(1px) }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); }
     .btn.secondary{
       background:transparent; color:var(--text);
       border:1px solid var(--stroke); font-weight:700;
@@ -103,38 +97,29 @@
   </style>
 </head>
 <body>
-    <div class="topbar">
-      <button id="backMenuBtn" class="top-btn" type="button">← Back to menu</button>
-      <div class="top-title">Upload BOL</div>
-    </div>
-
     <main class="card" id="container">
       <div class="head">
-        <div class="logo">⋯</div>
-        <div>
+        <div class="logo">📤</div> <div>
           <h1>Upload BOL</h1>
           <div class="sub">Attach your BOL file(s). We’ll capture your Telegram user ID automatically.</div>
         </div>
       </div>
 
-      <!-- Guard / errors -->
       <div id="guardError" class="banner error"></div>
       <div id="alert" class="banner error"></div>
       <div id="ok" class="banner ok"></div>
 
       <form id="bolForm" autocomplete="off" enctype="multipart/form-data" novalidate>
         <label for="bol">BOL file(s)</label>
-        <!-- сохраняем имя поля как в исходном upload.html -->
         <input id="bol" name="bol_file" class="input" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple required />
         <div class="hint">PDF or images are fine. Multiple pages → select multiple files.</div>
 
         <div class="row">
-          <button class="btn" type="submit" id="submit">Submit</button>
           <button class="btn secondary" type="button" id="back">Back to menu</button>
+          <button class="btn" type="submit" id="submit">Submit</button>
         </div>
       </form>
     </main>
-  </div>
 
   <script>
     // Telegram init
@@ -151,7 +136,7 @@
     const form = document.getElementById('bolForm');
     const submitBtn = document.getElementById('submit');
     const backBtn = document.getElementById('back');
-    const backMenuBtn = document.getElementById('backMenuBtn');
+    // const backMenuBtn = document.getElementById('backMenuBtn'); // УБРАН
     const fileInput = document.getElementById('bol');
     const alertBox = document.getElementById('alert');
     const okBox = document.getElementById('ok');
@@ -230,7 +215,7 @@
     }
 
     backBtn.addEventListener('click', backToMenu);
-    backMenuBtn.addEventListener('click', backToMenu);
+    // backMenuBtn.addEventListener('click', backToMenu); // УБРАН
 
     // Anti double-tap
     submitBtn.addEventListener('click', (e) => {
@@ -283,16 +268,21 @@
 
         // 4) Success UI
         showOk('Thanks! Your BOL has been uploaded.');
-        form.remove();
+        form.remove(); // Убираем форму
 
+        // Создаем финальный блок с кнопкой
         const done = document.createElement('div');
         done.innerHTML = `
           <div class="row">
-            <button class="btn" id="back2" type="button" style="margin-top:8px;">Back to menu</button>
-          </div>
+             </div>
         `;
+        // Находим кнопку "Back" в форме и перемещаем ее
+        const backButton = document.getElementById('back');
+        backButton.style.flexBasis = '100%'; // Растягиваем на всю ширину
+        done.querySelector('.row').appendChild(backButton);
+        
         container.appendChild(done);
-        document.getElementById('back2')?.addEventListener('click', backToMenu);
+        
       } catch (err) {
         showError('Error. Please try again.');
         inFlight = false;
